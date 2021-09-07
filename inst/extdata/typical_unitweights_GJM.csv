@@ -1,0 +1,20 @@
+description,gammab_above_loose,gammab_below_loose,gammab_above_dense,gammab_below_dense,source,source_description
+gravel,16,20,18,21,BS 8002-1994,gravel
+sandy gravel,19,21.5,21,23,BS 8002-1994,well graded sand and gravel
+gravelly sand,19,21.5,21,23,BS 8002-1994,well graded sand and gravel
+course sand,16.5,20,18.5,21.5,BS 8002-1994,course or medium sand
+medium sand,16.5,20,18.5,21.5,BS 8002-1994,course or medium sand
+well graded sand,18,20.5,21,22.5,BS 8002-1994,well graded sand
+fine sand,17,20,19,21.5,BS 8002-1994,fine or silty sand
+silty sand,17,20,19,21.5,BS 8002-1994,fine or silty sand
+very soft clay,14,14,18,18,BS 8002-1994,very soft clay
+soft clay,15,15,19,19,BS 8002-1994,soft clay
+firm clay,16.5,16.5,20.5,20.5,BS 8002-1994,firm clay
+stiff clay,18,18,22,22,BS 8002-1994,stiff clay
+very stiff clay,18.5,18.5,23.5,23.5,BS 8002-1994,very stiff clay
+hard clay,21,21,24,24,BS 8002-1994,hard clay
+glacial clay,21,21,21,21,BS 8002-1994,stiff or hard glacial clay
+organic clay,15,15,15,15,BS 8002-1994,organic clay
+peat,12,12,12,12,BS 8002-1994,peat
+course engineered fill,16,18,20,22,BS 8002-1994,course engineered fill
+fine engineering fill,17.5,18,20,20,BS 8002-1994,fine engineering fill

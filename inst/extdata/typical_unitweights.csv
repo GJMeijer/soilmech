@@ -1,0 +1,17 @@
+type,description,gammab_above_loose,gammab_below_loose,gammab_above_dense,gammab_below_dense,source
+granular,gravel,16,20,18,21,BS 8002-1994
+granular,well graded sand and gravel,19,21.5,21,23,BS 8002-1994
+granular,course or medium sand,16.5,20,18.5,21.5,BS 8002-1994
+granular,well graded sand,18,20.5,21,22.5,BS 8002-1994
+granular,fine or silty sand,17,20,19,21.5,BS 8002-1994
+cohesive,very soft clay,14,14,18,18,BS 8002-1994
+cohesive,soft clay,15,15,19,19,BS 8002-1994
+cohesive,firm clay,16.5,16.5,20.5,20.5,BS 8002-1994
+cohesive,stiff clay,18,18,22,22,BS 8002-1994
+cohesive,very stiff clay,18.5,18.5,23.5,23.5,BS 8002-1994
+cohesive,hard clay,21,21,24,24,BS 8002-1994
+cohesive,stiff or hard glacial clay,21,21,21,21,BS 8002-1994
+cohesive,organic clay,15,15,15,15,BS 8002-1994
+cohesive,peat,12,12,12,12,BS 8002-1994
+fill,course engineered fill,16,18,20,22,BS 8002-1994
+fill,fine engineering fill,17.5,18,20,20,BS 8002-1994
