@@ -5,12 +5,13 @@
 \title{Calculate verticals stresses using layers}
 \usage{
 vertical_stress_profile(
-  z_soil = c(0, 2, 4),
-  z_watertable = -2,
-  z_max = 6,
-  gamma_b = c(17.5, 15, 20),
+  z_soil = 0,
+  z_watertable = 0,
+  z_max = 10,
+  z_interval = NULL,
+  gamma_b = 19,
   gamma_w = 10,
-  q = 10,
+  q = 0,
   ...
 )
 }
@@ -21,6 +22,8 @@ vertical_stress_profile(
 
 \item{z_max}{maximum depth of interest}
 
+\item{z_interval}{additional interval at which to calculate stresses}
+
 \item{gamma_b}{unit weight of soil, in kN/m3. Should be a scalar or a
 vector with the same length as `z_soil`}
 
@@ -29,8 +32,6 @@ vector with the same length as `z_soil`}
 \item{q}{surcharge at soil surface}
 
 \item{...}{additional fields to be added to the returned data}
-
-\item{z_interval}{additional interval at which to calculate stresses}
 }
 \value{
 a tibble with depth `z`, vertical total stress `sigma_v`, vertical

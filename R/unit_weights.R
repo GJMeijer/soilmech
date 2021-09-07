@@ -4,7 +4,7 @@
 #' Get soil unit weight, above and below the water table, from a soil
 #' description
 #' @param description array with descriptions
-#' @round round unit weights to be nearest multiple of this number
+#' @param round round unit weights to be nearest multiple of this number
 #' @examples
 #' description <- c("very dense sand", "loose gravel")
 #' get_unitweight(description)

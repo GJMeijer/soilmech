@@ -31,6 +31,7 @@ theme_soilmech <- function() {
 #' Function returns a list of minor axis ticks for a certain range of values
 #'
 #' @param x array with minimum and maximum axis limits
+#' @return an array with minor tick positions on a log-scale
 #' @export
 
 get_log10_minorbreaks <- function(x){
@@ -121,49 +122,11 @@ round_limits <- function(
 }
 
 
-#############################
-### DEPRECIATED FUNCTIONS ###
-#############################
-
-#' Round values in an array to a 'nice' nearby number
+#' Annotate water table marker to a ggplot object
 #'
 #' @description
-#' Function to round an array of values to a 'nice' nearby number rounded
-#' numbers. This can be useful for setting plot limits. Values can be
-#' rounded upwards or downwards depending in the user choice
-#'
-#' @param x array with values to be rounded
-#' @param xl array with accepted values on a range [1,10].
-#' @param upper if `upper == TRUE`, values are rounded upwards.
-#'   If `upper = FALSE`, values are rounded downwards
-#' @return array with rounded values. Same size as input `x`
-#' @examples
-#' x <- 100 * runif(5)
-#' xf <- depreciated_round_limits(x, upper = TRUE)
-#' print(x)
-#' print(xf)
-#' @export
-
-depreciated_round_limits <- function(
-  x,
-  xl = c(1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10),
-  upper = TRUE
-){
-  if (upper == TRUE){
-    return(purrr::map_dbl(
-      x,
-      function(xi) ifelse((xi ==0), 0, utils::head(xl[xl>=(xi/(10^floor(log10(xi))))],1)*(10^floor(log10(xi))))
-    ))
-  } else {
-    return(purrr::map_dbl(
-      x,
-      function(xi) ifelse((xi == 0), 0, utils::tail(xl[xl<=(xi/(10^floor(log10(xi))))],1)*(10^floor(log10(xi))))
-    ))
-  }
-}
-
-
-#' Annotate water table marker to a ggplot object
+#' Adds a standard water table marker (upside-down triangle over a number of
+#' horizontal lines) to an existing ggplot
 #'
 #' @param plt ggplot object
 #' @param x,y x and y-position where marker touches water table
@@ -184,56 +147,61 @@ depreciated_round_limits <- function(
 
 ggplot_add_watermarker <- function(
   plt,
-  x,
-  y,
+  xc,
+  yc,
   scale = 1,
   line_size = 0.5,
   fill_water = "#2a7fff",
   colour_water = "#000080"
 ){
-  plt +
+  plt <- plt +
     ggplot2::annotate(
       "polygon",
-      x = x + scale*c(0, -0.5*tan(pi/6), 0.5*tan(pi/6)),
-      y = y + scale*c(0, 0.5, 0.5),
+      x = xc + scale*c(0, -0.5*tan(pi/6), 0.5*tan(pi/6)),
+      y = yc + scale*c(0, 0.5, 0.5),
       size = line_size,
       fill = fill_water,
       color = colour_water
     ) +
     ggplot2::annotate(
       "segment",
-      x = x - scale*0.25,
-      xend = x + scale*0.25,
-      y = y - scale*0.15,
-      yend = y - scale*0.15,
+      x = xc - scale*0.25,
+      xend = xc + scale*0.25,
+      y = yc - scale*0.15,
+      yend = yc - scale*0.15,
       size = line_size,
       color = colour_water
     ) +
     ggplot2::annotate(
       "segment",
-      x = x - scale*0.15,
-      xend = x + scale*0.15,
-      y = y - scale*0.30,
-      yend = y - scale*0.30,
+      x = xc - scale*0.15,
+      xend = xc + scale*0.15,
+      y = yc - scale*0.30,
+      yend = yc - scale*0.30,
       size = line_size,
       color = colour_water
     ) +
     ggplot2::annotate(
       "segment",
-      x = x - scale*0.05,
-      xend = x + scale*0.05,
-      y = y - scale*0.45,
-      yend = y - scale*0.45,
+      x = xc - scale*0.05,
+      xend = xc + scale*0.05,
+      y = yc - scale*0.45,
+      yend = yc - scale*0.45,
       size = line_size,
       color = colour_water
     )
+  #return
+  return(plt)
 }
 
 
 #' Annotate soil surface marker to a ggplot object
 #'
+#' @description
+#' Adds a standard soil surface indicator icon to an existing ggplot object
+#'
 #' @param plt ggplot object
-#' @param x,y x and y-position where marker touches the soil surface (middle)
+#' @param xc,yc x and y-position where marker touches the soil surface (middle)
 #' @param scale scaling factor for marker. Default width is approx 1
 #' @param line_size thickness of lines
 #' @param colour_soil line colour for all lines
@@ -250,20 +218,22 @@ ggplot_add_watermarker <- function(
 
 ggplot_add_soilmarker <- function(
   plt,
-  x,
-  y,
+  xc,
+  yc,
   scale = 1,
   line_size = 0.5,
   colour_soil = "#65571d",
   n = 3
 ){
+  #tibble with all line segments to be annotated
   df <- tibble::tibble(
-    x = scale*c(seq(-0.5, 0.5 - 0.5/n, l = 2*n), seq(-0.25, 0.25, l = (n + 1))),
-    y = scale*c(rep(0, 2*n), rep(-0.25*tan(pi/3), 4)),
-    xend = scale*c(seq(-0.25, 0 - 0.25/n, l = n), seq(0.25, 0.5 - 0.25/n, l = n), seq(0, 0.25 - 0.25/n, l = n), 0.5),
-    yend = -scale*0.25*tan(pi/3)*c(rep(seq(1, 0 + 1/n, l = n), 2), seq(0, 1 - 1/n, l = n), 0)
+    x = xc + scale*c(seq(-0.5, 0.5 - 0.5/n, l = 2*n), seq(-0.25, 0.25, l = (n + 1))),
+    y = yc + scale*c(rep(0, 2*n), rep(-0.25, (n + 1))),
+    xend = xc + scale*c(seq(-0.25, 0 - 0.25/n, l = n), seq(0.25, 0.5 - 0.25/n, l = n), seq(0, 0.25 - 0.25/n, l = n), 0.5),
+    yend = yc - scale*0.25*c(rep(seq(1, 0 + 1/n, l = n), 2), seq(0, 1 - 1/n, l = n), 0)
   )
-  plt + ggplot2::annotate(
+  #add to existing ggplot
+  plt <- plt + ggplot2::annotate(
     "segment",
     x = df$x,
     xend = df$xend,
@@ -272,4 +242,6 @@ ggplot_add_soilmarker <- function(
     size = line_size,
     color = colour_soil
   )
+  #return
+  return(plt)
 }
