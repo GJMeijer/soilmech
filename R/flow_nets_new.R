@@ -1,382 +1,13 @@
-#' Get indices of ghost nodes on an edge
-#'
-#' @description
-#' Get an array of the indices of all ghost nodes on a side of a rectangular
-#' grid of (real) nodes. Nodes are number per row --> per column. Ghost nodes
-#' are placed outside the edges of all sides of the rectangular grid
-#'
-#' @param nx,ny number of real nodes in x and y-direction
-#' @param edge edge number, numbered clockwise. `1` for left (negative x-face),
-#'   `2` for top (positive y-face), `3` for right (positive x-face) and `4`
-#'   for bottom (negative y-face)
-#' @param i0 node starting number.
-#' @return array of indices of ghost nodes on selected edge
-#' @export
-
-index_ghost <- function(nx, ny, edge, i0 = 0) {
-  if (edge == 1) {
-    return(i0 + seq(ny)*(nx + 2) - 1)
-  } else if (edge == 2) {
-    return(i0 + seq(nx) + (nx + 2)*(ny + 1) - 2)
-  } else if (edge == 3) {
-    return(i0 + (seq(ny) + 1)*(nx + 2) - 2)
-  } else if (edge == 4) {
-    return(i0 + seq(nx))
-  }
-}
-
-
-#' Get indices of all real nodes
-#'
-#' @description
-#' Get an array of the indices of all real nodes in a rectangular grid of
-#' (real) nodes. Nodes are number per row --> per column. Ghost nodes
-#' are placed outside the edges of all sides of the rectangular grid
-#'
-#' @inheritParams index_ghost
-#' @param ... potential extra arguments. Required to use the fuction with the
-#'   `purrr::pmap()` function
-#' @return array of indices for all real nodes (non-ghost nodes)
-#' @export
-
-index_real <- function(nx, ny, i0 = 0, ...) {
-  return(i0 + rep(seq(nx), ny) + rep(seq(ny), each = nx)*(nx + 2) - 1)
-}
-
-
-#' Get index of real nodes on an edge
-#'
-#' @description
-#' Get indices of real nodes lying on an edge. Indices are numbered row-first
-#' (x first).
-#'
-#' @inheritParams index_ghost
-#' @param real_only if `FALSE`, ghost nodes are assumed to be included in the
-#'   numbering of indices. If `TRUE`, all ghost nodes are assumed to have been
-#'   removed, and only real points are numbered
-#' @param ... additional arguments, in case the function is passed to
-#'   `purrr::pmap()`
-#' @return array with indices of real nodes on edge
-#' @export
-
-index_real_edge <- function(nx, ny, edge, i0 = 0, real_only = FALSE, ...) {
-  if (real_only == TRUE) {
-    if (edge == 1) {
-      return(i0 + 1 + (seq(ny) - 1)*nx)
-    } else if (edge == 2) {
-      return(i0 + seq(nx) + nx*(ny - 1))
-    } else if (edge == 3) {
-      return(i0 + seq(ny)*nx)
-    } else if (edge == 4) {
-      return(i0 + seq(nx))
-    }
-  } else {
-    if (edge == 1) {
-      return(i0 + seq(ny)*(nx + 2))
-    } else if (edge == 2) {
-      return(i0 + seq(nx) + ny*(nx + 2) - 1)
-    } else if (edge == 3) {
-      return(i0 + (seq(ny) + 1)*(nx + 2) - 3)
-    } else if (edge == 4) {
-      return(i0 + seq(nx) + nx + 1)
-    }
-  }
-}
-
-
-#' Determine total number of nodes
-#'
-#' @description
-#' Determine the total number of nodes on a grid of nodes, including any
-#' ghost nodes outside all four sides of the grid
-#'
-#' @inheritParams index_ghost
-#' @param if `real_only = FALSE`, all nodes, including ghost nodes are
-#'   counted. If `real_only = TRUE`, only real nodes are counted
-#' @return number of nodes (scalar)
-#' @export
-
-nodes_total <- function(nx, ny, real_only = FALSE) {
-  if (real == FALSE) {
-    return(nx*ny + 2*(nx + ny))
-  } else {
-    return(nx*ny)
-  }
-}
-
-
-#' Get indices of nodes bordering nodes
-#'
-#' @description
-#' Get the indices of neighbouring nodes in a grid with real and ghost nodes.
-#' This function inherently assumes those nodes exists. Make sure you don't
-#' request any nodes outside the grid.
-#'
-#' @param i array with node indices
-#' @param nx,ny number of nodes in x and y-direction
-#' @param edge side on which to look, numbered clockwise. `1` for left
-#'   (negative x-face), `2` for top (positive y-face), `3` for right
-#'   (positive x-face) and `4` for bottom (negative y-face)
-#' @importFrom magrittr `%>%`
-#' @return an array with node indices for neighbours
-#' @export
-
-index_neighbour <- function(i, nx, ny, edge, i0 = 0) {
-  tibble::tibble(i = i, nx = nx, ny = ny, edge = edge, i0 = i0) %>%
-    dplyr::mutate(
-      inew = ifelse(
-        edge == 1,
-        i - 1,
-        ifelse(
-          edge == 2,
-          ifelse(
-            ((i - i0) >= (nx + 2)*ny) | ((i - i0) <= nx),
-            i + (nx + 1),
-            i + (nx + 2)
-          ),
-          ifelse(
-            edge == 3,
-            i + 1,
-            ifelse(
-              ((i - i0) <= (2*nx + 1)) | ((i - i0) > ((ny + 1)*(nx + 2) - 2)),
-              i - (nx + 1),
-              i - (nx + 2)
-            )
-          )
-        )
-      )
-    ) %>%
-    dplyr::pull(inew)
-}
-
-
-#' Get finite difference matrix entries for real nodes
-#'
-#' @description
-#' Get row, column and value arrays for all non-zero entries in the second
-#' order finite difference grid, for all real points in a grid.
-#'
-#' @param nx,ny number of nodes in x and y-direction
-#' @param hx,hy grid size in x and y-direction
-#' @param kx,ky permeability in x and y-direction
-#' @param i0 starting node
-#' @return tibble with non-zero matrix entries. Fields `row` for row index,
-#'   `col` for column index and `val` for values. These can be used to
-#'   construct full solver matrix later
-#' @export
-
-findiff_entries_real <- function(nx, ny, hx = 1, hy = 1, kx = 1, ky = 1, i0 = 0, ...) {
-  #indices of real points and their neighbours
-  i <- i0 + index_real(nx, ny)
-  i1 <- index_neighbour(i, nx, ny, 1, i0 = i0)
-  i2 <- index_neighbour(i, nx, ny, 2, i0 = i0)
-  i3 <- index_neighbour(i, nx, ny, 3, i0 = i0)
-  i4 <- index_neighbour(i, nx, ny, 4, i0 = i0)
-  #generate lists
-  tibble::tibble(
-    row = c(i, i, i, i, i),
-    col = c(i, i1, i3, i4, i2),
-    val = c(
-      rep(-2*kx/hx^2 - 2*ky/hy^2, nx*ny),
-      rep(kx/hx^2, nx*ny),
-      rep(kx/hx^2, nx*ny),
-      rep(ky/hy^2, nx*ny),
-      rep(ky/hy^2, nx*ny)
-    )
-  )
-}
-
-
-#' Get finite difference matrix entries for all boundaries
-#'
-#' @description
-#' Get row, column and value arrays for all non-zero entries in the problem
-#' finite difference grid, for all boundaries of each rectangular grid section
-#'
-#' @param df tibble with all properties for the rectangular grids.
-#' @return tibble with non-zero matrix entries. Fields `row` for row index,
-#'   `col` for column index and `val` for values. These can be used to
-#'   construct full head solver matrix later
-#' @export
-
-findiff_entries_bc <- function(df) {
-  #initiate list and left-hand sides
-  mlist <- vector(mode = "list", length = 4*nrow(df))
-  lhs <- rep(0, sum(df$ntotal))
-  #loop through all blocks
-  for (i in 1:nrow(df)) {
-    ## left edge (1)
-    edge <- 1
-    ilist <- (i - 1)*4 + edge
-    ig <- index_ghost(df$nx[i], df$ny[i], edge, i0 = df$i0[i])
-    if (df$type1[i] == "h") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = ig,
-        col = ig + 1,
-        val = 1
-      )
-      lhs[ig] <- df$value1[i]
-    } else if (df$type1[i] == "q") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig),
-        col = c(ig, ig + 2),
-        val = -df$kx[i]/df$hx[i]*c(rep(-0.5, length(ig)), rep(0.5, length(ig)))
-      )
-      lhs[ig] <- df$value1[i]
-    } else if (df$type1[i] == "c") {
-      ibn <- df$value1[i]
-      ign <- index_ghost(df$nx[ibn], df$ny[ibn], 3, i0 = df$i0[ibn])
-      #same flow
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig, ig, ig),
-        col = c(ig, ig + 2, ign - 2, ign),
-        val = c(
-          rep(df$kx[i]/df$hx[i], length(ig)),
-          rep(-df$kx[i]/df$hx[i], length(ig)),
-          rep(-df$kx[ibn]/df$hx[ibn], length(ign)),
-          rep(df$kx[ibn]/df$hx[ibn], length(ign))
-        )
-      )
-    }
-
-    ## top edge (2)
-    edge <- 2
-    ilist <- (i - 1)*4 + edge
-    ig <- index_ghost(df$nx[i], df$ny[i], edge, i0 = df$i0[i])
-    if (df$type2[i] == "h") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = ig,
-        col = ig - df$nx[i] - 1,
-        val = 1
-      )
-      lhs[ig] <- df$value2[i]
-    } else if (df$type2[i] == "q") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig),
-        col = c(ig - 2*df$nx[i] - 3, ig),
-        val = -df$ky[i]/df$hy[i]*c(rep(-0.5, length(ig)), rep(0.5, length(ig)))
-      )
-      lhs[ig] <- df$value2[i]
-    } else if (df$type2[i] == "c") {
-      ibn <- df$value2[i]
-      ign <- index_ghost(df$nx[ibn], df$ny[ibn], 4, i0 = df$i0[ibn])
-      #same head
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig),
-        col = c(ig - df$nx[i] - 1, ign + df$nx[ibn] + 1),
-        val = c(rep(1, length(ig)), rep(-1, length(ign)))
-      )
-    }
-
-    ## right edge (3)
-    edge <- 3
-    ilist <- (i - 1)*4 + edge
-    ig <- index_ghost(df$nx[i], df$ny[i], edge, i0 = df$i0[i])
-    if (df$type3[i] == "h") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = ig,
-        col = ig - 1,
-        val = 1
-      )
-      lhs[ig] <- df$value3[i]
-    } else if (df$type3[i] == "q") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig),
-        col = c(ig - 2, ig),
-        val = -df$kx[i]/df$hx[i]*c(rep(-0.5, length(ig)), rep(0.5, length(ig)))
-      )
-      lhs[ig] <- df$value3[i]
-    } else if (df$type3[i] == "c") {
-      ibn <- df$value3[i]
-      ign <- index_ghost(df$nx[ibn], df$ny[ibn], 1, i0 = df$i0[ibn])
-      #same head
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig),
-        col = c(ig - 1, ign + 1),
-        val = c(rep(1, length(ig)), rep(-1, length(ign)))
-      )
-    }
-
-    ## bottom edge (4)
-    edge <- 4
-    ilist <- (i - 1)*4 + edge
-    ig <- index_ghost(df$nx[i], df$ny[i], edge, i0 = df$i0[i])
-    if (df$type4[i] == "h") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = ig,
-        col = ig + df$nx[i] + 1,
-        val = 1
-      )
-      lhs[ig] <- df$value4[i]
-    } else if (df$type4[i] == "q") {
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig),
-        col = c(ig, ig + 2*df$nx[i] + 3),
-        val = -df$ky[i]/df$hy[i]*c(rep(-0.5, length(ig)), rep(0.5, length(ig)))
-      )
-      lhs[ig] <- df$value4[i]
-    } else if (df$type4[i] == "c") {
-      ibn <- df$value4[i]
-      ign <- index_ghost(df$nx[ibn], df$ny[ibn], 2, i0 = df$i0[ibn])
-      #same flow
-      mlist[[ilist]] <- tibble::tibble(
-        row = c(ig, ig, ig, ig),
-        col = c(ig, ig + 2*df$nx[i] + 3, ign - 2*df$nx[ibn] - 3, ign),
-        val = c(
-          rep(df$ky[i]/df$hy[i], length(ig)),
-          rep(-df$ky[i]/df$hy[i], length(ig)),
-          rep(-df$ky[ibn]/df$hy[ibn], length(ign)),
-          rep(df$ky[ibn]/df$hy[ibn], length(ign))
-        )
-      )
-    }
-  }
-  #return
-  return(list(
-    lhs = lhs,
-    matrix_el = dplyr::bind_rows(mlist)
-  ))
-}
-
-
-#' Get coordinates of all real nodes in the finite difference grid
-#'
-#' @description
-#' Function obtains the x,y positions of all real nodes in the finite difference
-#' grid
-#'
-#' @param df tibble with all properties for the rectangular domains
-#' @importFrom magrittr `%>%`
-#' @return a tibble with fields `x` and `y` for positions, and `id` to indicate
-#'   which grid the point belongs to
-#' @export
-
-nodal_coordinates_real <- function(df) {
-  #get x-y positions relative to bottom left corner point
-  dp <- purrr::pmap_dfr(
-    df %>% dplyr::mutate(id = seq(nrow(df))),
-    function(id, nx, ny, hx, hy, x0, y0, ...) {
-      tibble::tibble(
-        id = id,
-        x = x0 + hx*rep((seq(nx) - 1), ny),
-        y = y0 + hy*rep((seq(ny) - 1), each = nx)
-      )
-    }
-  )
-  return(dp)
-}
-
-
 #' Generate tibble describing flow net problem
 #'
 #' @description
 #' The flow net problem consists of connected rectangular domains. The
 #' permabilities can be set seperately for each domain.
 #'
-#' @param x0 x and y position of the bottom left corner of the first domain
-#' @param width,height width (x-direction) and height (y-direction) of each
-#'   domain in the problem
-#' @param height_dry thickness of any dry soil directly on top of this domain.
+#' @md
+#' @param x0,y0 x and y position of the bottom left corner of the first domain
+#' @param Lx,Ly size in x and y direction of each rectangular domain
+#' @param Ly_dry thickness of any dry soil directly on top of this domain.
 #'   This is only used to generate the soil geometry later. This extra height
 #'   is only plotted when the top edge of the domain (edge 2) has a fixed
 #'   head as boundary condition
@@ -389,7 +20,7 @@ nodal_coordinates_real <- function(df) {
 #'   * `type3` for the right edge (positive x-face)
 #'   * `type4` for the bottom edge (negative y-face)
 #' Possible values for the boundary condition types are:
-#'   * `type = "q"`: known flow (in positive direction)
+#'   * `type = "q"`: known flow (positive in inflow)
 #'   * `type = "h"`: known head
 #'   * `type = "c"`: face is connected to a face in another domain
 #' @param value1,value2,value3,value4 values of boundary conditions:
@@ -406,14 +37,17 @@ nodal_coordinates_real <- function(df) {
 #'   point in each domain, `nx` and `ny` (the number of real nodes in each
 #'   domain in each direction), and `hx`, and `hy` (the distance between
 #'   nodes in each direction)
+#' @examples
+#' #create the default flow net
+#' generate_flownet_properties()
 #' @export
 
 generate_flownet_properties <- function(
   x0 = 0,
   y0 = 0,
-  width = c(15, 15, 5, 20, 20),
-  height = c(7.5, 10, 10, 10, 5),
-  height_dry = c(0, 0, 0, 0, 0),
+  Lx = c(15, 15, 5, 20, 20),
+  Ly = c(7.5, 10, 10, 10, 5),
+  Ly_dry = c(0, 0, 0, 0, 0),
   kx = 1e-6,
   ky = 1e-6,
   type1 = c("q","q","c","c","q"),
@@ -428,9 +62,9 @@ generate_flownet_properties <- function(
 ){
   #create tibble with all input properties
   df <- tibble::tibble(
-    width = width,
-    height = height,
-    height_dry = height_dry,
+    Lx = Lx,
+    Ly = Ly,
+    Ly_dry = Ly_dry,
     kx = kx,
     ky = ky,
     type1 = type1,
@@ -452,11 +86,11 @@ generate_flownet_properties <- function(
   #            of all ghost nodes, minus 1
   df <- dplyr::mutate(
     df,
-    nx = pmax(2, ceiling(1 + .data$width / grid_size)),
-    ny = pmax(2, ceiling(1 + .data$height / grid_size)),
-    hx = .data$width/(.data$nx - 1),
-    hy = .data$height/(.data$ny - 1),
-    ntotal = nodes_total(.data$nx, .data$ny),
+    nx = pmax(2, ceiling(1 + .data$Lx / grid_size)),
+    ny = pmax(2, ceiling(1 + .data$Ly / grid_size)),
+    hx = .data$Lx/(.data$nx - 1),
+    hy = .data$Ly/(.data$ny - 1),
+    ntotal = nodes_total(.data$nx, .data$ny, real_only = FALSE),
     i0 = cumsum(c(0, utils::head(.data$ntotal, -1))),
     i0_real = cumsum(c(0, utils::head(.data$nx, -1)*utils::head(.data$ny, -1)))
   )
@@ -475,20 +109,220 @@ generate_flownet_properties <- function(
       ic4 <- which((df$type4 == "c") & (df$value4 == i))
       ic4 <- ic4[ic4 > i]
       #adjust position
-      df$x0[ic1] <- df$x0[i] + df$width[i]
+      df$x0[ic1] <- df$x0[i] + df$Lx[i]
       df$y0[ic1] <- df$y0[i]
       df$x0[ic2] <- df$x0[i]
-      df$y0[ic2] <- df$y0[i] - df$height[ic2]
-      df$x0[ic3] <- df$x0[i] - df$width[ic3]
+      df$y0[ic2] <- df$y0[i] - df$Ly[ic2]
+      df$x0[ic3] <- df$x0[i] - df$Lx[ic3]
       df$y0[ic3] <- df$y0[i]
       df$x0[ic4] <- df$x0[i]
-      df$y0[ic4] <- df$y0[i] + df$height[i]
+      df$y0[ic4] <- df$y0[i] + df$Ly[i]
     }
   }
   #return
   df
 }
 
+
+#' get all sparse entries and lhs for boundary conditions
+#'
+#' @description
+#' function ta
+#'
+#' @param df tibble describing flow problem. Generated by function
+#'   `generate_flownet_properties()`
+#' @return a list with two fields: `mat` containing a tibble with sparse
+#'   row (`row`), column (`col`) and values (`val`) of finite difference
+#'   matrix elements related to boundary conditions; and `lhs` which is a
+#'   vector with all left-hand side of equation values
+
+findiff_sparse_entries_bc <- function(df) {
+  #get long form for all boundary conditions
+  dbc <- tibble::tibble(
+    type = c(df$type1, df$type2, df$type3, df$type4),
+    value = c(df$value1, df$value2, df$value3, df$value4),
+    edge = rep(seq(4), each = nrow(df)),
+    id = rep(seq(nrow(df)), 4)
+  ) %>%
+    dplyr::left_join(
+      df %>%
+        dplyr::select(dplyr::all_of(c("kx", "ky", "nx", "ny", "hx", "hy", "Lx", "Ly", "x0", "y0", "i0"))) %>%
+        dplyr::mutate(id = seq(nrow(df))),
+      by = "id"
+    ) %>%
+    dplyr::mutate(
+      k = ifelse((.data$edge %in% c(1, 3)), .data$kx, .data$ky),
+      h = ifelse((.data$edge %in% c(1, 3)), .data$hx, .data$hy),
+    )
+  #initiate list and left-hand sides
+  mlist <- vector(mode = "list", length = nrow(dbc))
+  lhs <- rep(0, sum(df$ntotal))
+  #loop through all bcs
+  for (i in 1:nrow(dbc)) {
+    if (dbc$type[i] == "h") {
+      #Defined head
+      i1 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 0)
+      i2 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 1)
+      mlist[[i]] <- tibble::tibble(
+        row = i1,
+        col = i2,
+        val = 1
+      )
+      lhs[i1] <- dbc$value[i]
+    } else if (dbc$type[i] == "q") {
+      #Defined flow rate (positive into domain)
+      i1 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 0)
+      i2 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 2)
+      mlist[[i]] <- tibble::tibble(
+        row = rep(i1, 2),
+        col = c(i1, i2),
+        val = rep(c(0.5, -0.5)*dbc$k[i]/dbc$h[i], each = length(i1))
+      )
+      lhs[i1] <- dbc$value[i]
+    } else if (dbc$type[i] == "c") {
+      #connected to other domain (b)
+      #index in <dbc> of connecting edge
+      ib <- which((dbc$id == dbc$value[i]) & (dbc$edge == (1 + (dbc$edge[i] + 1)%%4)))
+      if (dbc$edge[i] %in% c(2, 3)) {
+        #other domain connected on positive side - same head
+        ia1 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 0)
+        ia2 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 1)
+        ib2 <- index_edge(dbc$nx[ib], dbc$ny[ib], dbc$edge[ib], i0 = dbc$i0[ib], offset = 1)
+        mlist[[i]] <- tibble::tibble(
+          row = rep(ia1, 2),
+          col = c(ia2, ib2),
+          val = rep(c(-1, 1), each = length(ia1))
+        )
+      } else {
+        #other domain on negative side - same flow rate
+        ia1 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 0)
+        ia2 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 2)
+        ib1 <- index_edge(dbc$nx[ib], dbc$ny[ib], dbc$edge[ib], i0 = dbc$i0[ib], offset = 0)
+        ib2 <- index_edge(dbc$nx[ib], dbc$ny[ib], dbc$edge[ib], i0 = dbc$i0[ib], offset = 2)
+        mlist[[i]] <- tibble::tibble(
+          row = rep(ia1, 4),
+          col = c(ia1, ia2, ib1, ib2),
+          val = c(
+            rep(c(-0.5, 0.5)*dbc$k[i]/dbc$h[i], each = length(ia1)),
+            rep(c(-0.5, 0.5)*dbc$k[ib]/dbc$h[ib], each = length(ib1))
+          )
+        )
+      }
+    }
+  }
+  #return
+  return(list(mat = dplyr::bind_rows(mlist), lhs = lhs))
+}
+
+
+solve_flownet <- function(df) {
+  ## SOLVE FOR HEAD
+  #get sparse matrix elements and left-hand side for boundary conditions
+  Mbc <- findiff_sparse_entries_bc(df)
+  #get sparse matrix elements for Poissons equation for each real node
+  M2x <- df %>%
+    dplyr::select(nx, ny, kx, hx, i0) %>%
+    purrr::pmap_dfr(
+      function(nx, ny, kx, hx, i0) findiff_sparse_entries(nx, ny, order = 2, h = hx, direction = "x", multiplier = kx, i0_row = i0, i0_col = i0)
+    )
+  M2y <- df %>%
+    dplyr::select(nx, ny, ky, hy, i0) %>%
+    purrr::pmap_dfr(
+      function(nx, ny, ky, hy, i0) findiff_sparse_entries(nx, ny, order = 2, h = hy, direction = "y", multiplier = ky, i0_row = i0, i0_col = i0)
+    )
+  #create sparse matrix
+  mat <- Matrix::sparseMatrix(
+    i = c(Mbc$mat$row, M2x$row, M2y$row),
+    j = c(Mbc$mat$col, M2x$col, M2y$col),
+    x = c(Mbc$mat$val, M2x$val, M2y$val),
+    dims = rep(sum(df$ntotal), 2)
+  )
+  #bind together, and solve system
+  h = Matrix::solve(mat, Mbc$lhs)
+
+  ## CALCULATE FLOW FROM HEAD
+  #flow in x-direction
+  M1qx <- df %>%
+    dplyr::select(nx, ny, kx, hx, i0) %>%
+    purrr::pmap_dfr(
+      function(nx, ny, kx, hx, i0) findiff_sparse_entries(nx, ny, order = 1, h = hx, direction = "x", multiplier = -kx, i0_row = i0, i0_col = i0)
+    )
+  qx <- Matrix::sparseMatrix(
+    i = M1qx$row,
+    j = M1qx$col,
+    x = M1qx$val,
+    dims = rep(sum(df$ntotal), 2)
+  ) %*% h
+  #flow in y-direction
+  M1qy <- df %>%
+    dplyr::select(nx, ny, ky, hy, i0) %>%
+    purrr::pmap_dfr(
+      function(nx, ny, ky, hy, i0) findiff_sparse_entries(nx, ny, order = 1, h = hy, direction = "y", multiplier = -ky, i0_row = i0, i0_col = i0)
+    )
+  qy <- Matrix::sparseMatrix(
+    i = M1qy$row,
+    j = M1qy$col,
+    x = M1qy$val,
+    dims = rep(sum(df$ntotal), 2)
+  ) %*% h
+
+  ## ASSIGN SOLUTIONS AND POSITIONS (real nodes only)
+  #indices of real nodes
+  i_real <- purrr::pmap(df, index_real) %>% unlist()
+  #generate solution object for all nodes
+  dp <- purrr::pmap_dfr(df, nodal_coordinates_real) %>%
+    dplyr::mutate(
+      h = h[i_real],
+      qx = qx[i_real],
+      qy = qy[i_real]
+    )
+
+  ## GET FLOW POTENTIAL FROM FLOW
+  #x-direction matrix
+  M1x_el <- df %>%
+    dplyr::select(nx, ny, kx, hx, i0_real) %>%
+    purrr::pmap_dfr(
+      function(nx, ny, kx, hx, i0_real) findiff_sparse_entries(nx, ny, order = 1, h = hx, direction = "x", i0_row = i0_real, i0_col = i0_real, real_only = TRUE)
+    )
+  M1x <- Matrix::sparseMatrix(
+    i = M1x_el$row,
+    j = M1x_el$col,
+    x = M1x_el$val,
+    dims = rep(sum(df$nx*df$ny), 2)
+  )
+  #flow in y-direction
+  M1y_el <- df %>%
+    dplyr::select(nx, ny, ky, hy, i0_real) %>%
+    purrr::pmap_dfr(
+      function(nx, ny, ky, hy, i0_real) findiff_sparse_entries(nx, ny, order = 1, h = hy, direction = "y", i0_row = i0_real, i0_col = i0_real, real_only = TRUE)
+    )
+  M1y <- Matrix::sparseMatrix(
+    i = M1y_el$row,
+    j = M1y_el$col,
+    x = M1y_el$val,
+    dims = rep(sum(df$nx*df$ny), 2)
+  )
+  #flow potential must match on each of the connecting segments
+
+  #solve
+
+  #add to dataframe
+
+  ## RETURN
+  #return
+}
+
+
+
+#test finite difference
+nx <- 10
+ny <- 10
+real_only <- FALSE
+nt <- nodes_total(nx, ny, real_only = real_only)
+M <- findiff_sparse_entries(nx, ny, order = 2, h = 1, direction = "y", real_only = real_only)
+m <- Matrix::sparseMatrix(i = M$row, j = M$col, x = M$val, dims = rep(nt, 2))
+v <- seq(nt)
+plot(m%*%v)
 
 #' Solve flow net head problem for concatenated rectangular domains
 #'
