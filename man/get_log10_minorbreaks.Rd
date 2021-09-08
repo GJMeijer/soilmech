@@ -9,6 +9,9 @@ get_log10_minorbreaks(x)
 \arguments{
 \item{x}{array with minimum and maximum axis limits}
 }
+\value{
+an array with minor tick positions on a log-scale
+}
 \description{
 Function returns a list of minor axis ticks for a certain range of values
 }

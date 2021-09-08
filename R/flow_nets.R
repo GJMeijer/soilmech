@@ -91,12 +91,12 @@ index_real_edge <- function(nx, ny, edge, i0 = 0, real_only = FALSE, ...) {
 #' ghost nodes outside all four sides of the grid
 #'
 #' @inheritParams index_ghost
-#' @param if `real = FALSE`, all nodes, including ghost nodes are counted.
-#'   if `real = TRUE`, only real nodes are counted
+#' @param if `real_only = FALSE`, all nodes, including ghost nodes are
+#'   counted. If `real_only = TRUE`, only real nodes are counted
 #' @return number of nodes (scalar)
 #' @export
 
-nodes_total <- function(nx, ny, real = FALSE) {
+nodes_total <- function(nx, ny, real_only = FALSE) {
   if (real == FALSE) {
     return(nx*ny + 2*(nx + ny))
   } else {
@@ -196,7 +196,7 @@ findiff_entries_real <- function(nx, ny, hx = 1, hy = 1, kx = 1, ky = 1, i0 = 0,
 #' @param df tibble with all properties for the rectangular grids.
 #' @return tibble with non-zero matrix entries. Fields `row` for row index,
 #'   `col` for column index and `val` for values. These can be used to
-#'   construct full solver matrix later
+#'   construct full head solver matrix later
 #' @export
 
 findiff_entries_bc <- function(df) {
@@ -540,6 +540,115 @@ solve_flownet <- function(df) {
 }
 
 
+#' Get sparse matrix elements for 1st order differentiation
+#'
+#' @description
+#' Function generates rows, column and values for sparse matrix to get a
+#' first order approximation of values in a regular grid, in either the x
+#' or y direction.
+#'
+#' The function assumes a regular, rectangular grid where nodes are numbered
+#' row-first. The grid only contains real points (no ghost nodes). The finite
+#' difference approximation is of the second order (central differences). For
+#' the point on the edge, a second order approximation is used (forwards or
+#' backwards, depending on the position)
+#'
+#' @param nx,ny number of real nodes in x and y-direction
+#' @param h step size
+#' @param direction direction of finite differences. `direction` should be
+#'   equal to either `x` or `y`
+#' @param i0_row,i0_col optional index offset for rows and columns
+#' @return a tibble with node indices for row (`row`), column (`col`) and
+#'   value (`val`) columns of non-zero entries in the matrix
+#' @examples
+#' findiff_entries_1storder(4, 4, direction = "x")
+#' findiff_entries_1storder(4, 4, direction = "y")
+#' @export
+
+findiff_entries_1storder <- function(
+  nx,
+  ny,
+  h = 1,
+  direction = "x",
+  real_only = FALSE,
+  i0_row = 0,
+  i0_col = 0
+){
+  if (direction == "x") {
+    if (real_only == TRUE) {
+      #elements for a single row
+      row_first <- c(rep(1, 3), rep(seq(2, nx - 1), each = 2), rep(nx, 3))
+      col_first <- c(1, 2, 3, rep(seq(2, nx - 1), each = 2) + rep(c(-1, 1), (nx - 2)), nx - c(2, 1, 0))
+      val_first <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (nx - 2)), 0.5, -2, 1.5)/h
+      #elements for all rows
+      return(tibble::tibble(
+        row = i0_row + rep(row_first, ny) + rep((seq(ny) - 1)*nx, each = length(row_first)),
+        col = i0_col + rep(col_first, ny) + rep((seq(ny) - 1)*nx, each = length(col_first)),
+        val = rep(val_first, ny)
+      ))
+    } else {
+      #elements for a single row
+      row_first <- rep(seq(nx + 2, 2*nx + 1), 2)
+      col_first <- row_first + rep(c(-1, 1), each = nx)
+      val_first <- rep(c(-0.5, 0.5), each = nx)/h
+      #elements for all rows
+      return(tibble::tibble(
+        row = i0_row + rep(row_first, ny) + rep((seq(ny) - 1)*(nx + 2), each = length(row_first)),
+        col = i0_col + rep(col_first, ny) + rep((seq(ny) - 1)*(nx + 2), each = length(col_first)),
+        val = rep(val_first, ny)
+      ))
+    }
+  } else if (direction == "y") {
+    if (real_only == TRUE) {
+      #elements for a single column
+      row_single <- c(rep(1, 3), rep(seq(2, ny - 1), each = 2), rep(ny, 3))
+      col_single <- c(1, 2, 3, rep(seq(2, ny - 1), each = 2) + rep(c(-1, 1), (ny - 2)), ny - c(2, 1, 0))
+      val_single <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (ny - 2)), 0.5, -2, 1.5)/h
+      #elements for all columns
+      return(tibble::tibble(
+        row = i0_row + rep((row_single - 1)*nx, nx) + rep(seq(nx), each = length(row_single)),
+        col = i0_col + rep((col_single - 1)*nx, nx) + rep(seq(nx), each = length(col_single)),
+        val = rep(val_single, nx)
+      ))
+    } else {
+
+    }
+  }
+}
+
+
+#matrix elements for a single domain
+flow_potential_matrixel_single <- function(x, y, qx, qy, i0, ntotal_real) {
+  #initial calcs
+  xu <- unique(x)
+  yu <- unique(y)
+  nx <- length(xu)
+  ny <- length(yu)
+  hx <- (max(xu) - min(xu)) / (nx - 1)
+  hy <- (max(yu) - min(yu)) / (ny - 1)
+  #first order differentiation - x-direction
+  row_x_single <- c(rep(1, 3), rep(seq(2, nx - 1), each = 2), rep(nx, 3))
+  col_x_single <- c(1, 2, 3, rep(seq(2, nx - 1), each = 2) + rep(c(-1, 1), (nx - 2)), nx - c(2, 1, 0))
+  val_x_single <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (nx - 2)), 0.5, -2, 1.5)/hx
+  row_x <- i0[1] + rep(row_x_single, ny) + rep((seq(ny) - 1)*nx, each = length(row_x_single))
+  col_x <- i0[1] + rep(col_x_single, ny) + rep((seq(ny) - 1)*nx, each = length(col_x_single))
+  val_x <- rep(val_x_single, ny)
+  #first order differentiation - y-direction
+  row_y_single <- c(rep(1, 3), rep(seq(2, ny - 1), each = 2), rep(ny, 3))
+  col_y_single <- c(1, 2, 3, rep(seq(2, ny - 1), each = 2) + rep(c(-1, 1), (ny - 2)), ny - c(2, 1, 0))
+  val_y_single <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (ny - 2)), 0.5, -2, 1.5)/hy
+  row_y <- ntotal_real + i0[1] + rep((row_y_single - 1)*nx, nx) + rep(seq(nx), each = length(row_y_single))
+  col_y <- i0[1] + rep((col_y_single - 1)*nx, nx) + rep(seq(nx), each = length(col_y_single))
+  val_y <- rep(val_y_single, nx)
+  #return sparse non-zero elements
+  return(tibble::tibble(
+    row = c(row_x, row_y),
+    col = c(col_x, col_y),
+    val = c(val_x, val_y)
+  ))
+}
+
+
 #' Calculate the flow potential at every point
 #'
 #' @description
@@ -567,36 +676,6 @@ solve_flownet <- function(df) {
 flow_potential <- function(df, dp) {
   #number of real nodes
   ntotal_real <- sum(df$nx * df$ny)
-  #matrix elements for a single domain
-  flow_potential_matrixel_single <- function(x, y, qx, qy, i0, ntotal_real) {
-    #initial calcs
-    xu <- unique(x)
-    yu <- unique(y)
-    nx <- length(xu)
-    ny <- length(yu)
-    hx <- (max(xu) - min(xu)) / (nx - 1)
-    hy <- (max(yu) - min(yu)) / (ny - 1)
-    #first order differentiation - x-direction
-    row_x_single <- c(rep(1, 3), rep(seq(2, nx - 1), each = 2), rep(nx, 3))
-    col_x_single <- c(1, 2, 3, rep(seq(2, nx - 1), each = 2) + rep(c(-1, 1), (nx - 2)), nx - c(2, 1, 0))
-    val_x_single <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (nx - 2)), 0.5, -2, 1.5)/hx
-    row_x <- i0[1] + rep(row_x_single, ny) + rep((seq(ny) - 1)*nx, each = length(row_x_single))
-    col_x <- i0[1] + rep(col_x_single, ny) + rep((seq(ny) - 1)*nx, each = length(col_x_single))
-    val_x <- rep(val_x_single, ny)
-    #first order differentiation - y-direction
-    row_y_single <- c(rep(1, 3), rep(seq(2, ny - 1), each = 2), rep(ny, 3))
-    col_y_single <- c(1, 2, 3, rep(seq(2, ny - 1), each = 2) + rep(c(-1, 1), (ny - 2)), ny - c(2, 1, 0))
-    val_y_single <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (ny - 2)), 0.5, -2, 1.5)/hy
-    row_y <- ntotal_real + i0[1] + rep((row_y_single - 1)*nx, nx) + rep(seq(nx), each = length(row_y_single))
-    col_y <- i0[1] + rep((col_y_single - 1)*nx, nx) + rep(seq(nx), each = length(col_y_single))
-    val_y <- rep(val_y_single, nx)
-    #return sparse non-zero elements
-    return(tibble::tibble(
-      row = c(row_x, row_y),
-      col = c(col_x, col_y),
-      val = c(val_x, val_y)
-    ))
-  }
   #get all non-zero sparse elements for matrix equations
   mat_el1 <- dp %>%
     dplyr::mutate(i0 = df$i0_real[.data$id]) %>%
