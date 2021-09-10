@@ -4,14 +4,14 @@
 \alias{nodal_coordinates_real}
 \title{Get coordinates of all real nodes in the finite difference grid}
 \usage{
-nodal_coordinates_real(nx, ny, Lx = 1, Ly = 1, x0 = 0, y0 = 0, ...)
+nodal_coordinates_real(nx, ny, x0 = 0, y0 = 0, x1 = 1, y1 = 1, id = NULL, ...)
 }
 \arguments{
 \item{nx, ny}{number of real nodes on the grid}
 
-\item{Lx, Ly}{length of grid in x and y direction}
+\item{x0, x1, y0, y1}{x and y-positions of domain edges}
 
-\item{x0, y0}{position of origin of the grid}
+\item{id}{array with domain identifiers}
 
 \item{...}{additional named arguments to pass to function}
 }
@@ -27,10 +27,10 @@ grid
 df <- nodal_coordinates_real(
   nx = c(4, 5),
   ny = c(3, 4),
-  Lx = c(3, 2),
-  Ly = c(2, 3),
   x0 = c(0, 4),
-  y0 = c(0, 4)
+  y0 = c(0, 4),
+  x1 = c(2, 7),
+  y1 = c(3, 5)
 )
 plot(df$x, df$y, "b")
 }

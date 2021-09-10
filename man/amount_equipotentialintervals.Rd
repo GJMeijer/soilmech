@@ -13,6 +13,9 @@ amount_equipotentialintervals(df, dp, Nf = 5)
 
 \item{Nf}{number of requested flow channels}
 }
+\value{
+the optimal number of equipotential intervals `Nd`
+}
 \description{
 This function takes a finite difference solution for both head `h` and flow
 potential function `psi` to get the best number of equipotential intervals
@@ -20,7 +23,7 @@ potential function `psi` to get the best number of equipotential intervals
 the permeabilities in all domains is the same
 }
 \examples{
-df <- generate_flownet_properties()
+df <- flownet_geometry()
 dp <- solve_flownet(df)
 amount_equipotentialintervals(df, dp, Nf = 5)
 }

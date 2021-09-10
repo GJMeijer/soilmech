@@ -384,8 +384,8 @@ index_grid2vector <- function(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = 
 #' grid
 #'
 #' @param nx,ny number of real nodes on the grid
-#' @param x0,x1,y0,y1 x and y-positions of domain edges
-#' @param id array with domain identifiers
+#' @param Lx,Ly length of grid in x and y direction
+#' @param x0,y0 position of origin of the grid
 #' @param ... additional named arguments to pass to function
 #' @importFrom magrittr `%>%`
 #' @return a tibble with fields `x` and `y` for positions, and `id` to indicate
@@ -394,26 +394,24 @@ index_grid2vector <- function(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = 
 #' df <- nodal_coordinates_real(
 #'   nx = c(4, 5),
 #'   ny = c(3, 4),
+#'   Lx = c(3, 2),
+#'   Ly = c(2, 3),
 #'   x0 = c(0, 4),
-#'   y0 = c(0, 4),
-#'   x1 = c(2, 7),
-#'   y1 = c(3, 5)
+#'   y0 = c(0, 4)
 #' )
 #' plot(df$x, df$y, "b")
 #' @export
 
-nodal_coordinates_real <- function(nx, ny, x0 = 0, y0 = 0, x1 = 1, y1 = 1, id = NULL, ...) {
-  df <- tibble::tibble(nx = nx, ny = ny, x0 = x0, y0 = y0, x1 = x1, y1 = y1)
-  if (is.null(id)) {
-    df$id <- seq(nrow(df))
-  } else {
-    df$id <- id
-  }
-  df %>%
-    dplyr::rowwise() %>%
-    dplyr::summarise(
-      id = id,
-      x = rep(seq(x0, x1, l = nx), ny),
-      y = rep(seq(y0, y1, l = ny), each = nx)
-    )
+nodal_coordinates_real <- function(nx, ny, Lx = 1, Ly = 1, x0 = 0, y0 = 0, ...) {
+  tibble::tibble(nx = nx, ny = ny, Lx = Lx, Ly = Ly, x0 = x0, y0 = y0) %>%
+    dplyr::mutate(id = seq(dplyr::n())) %>%
+    purrr::pmap_dfr(
+      function(id, nx, ny, Lx, Ly, x0, y0, ...) {
+        tibble::tibble(
+          id = id,
+          x = x0 + rep(seq(0, Lx, l = nx), ny),
+          y = y0 + rep(seq(0, Ly, l = ny), each = nx)
+        )
+      }
+  )
 }

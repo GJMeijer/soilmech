@@ -63,7 +63,7 @@ a ggplot object
 Plot flow net in part of soil that is saturated
 }
 \examples{
-df <- generate_flownet_properties()
-dp <- solve_flownet(df)
-ggplot_flownet_only(df, dp, axes = FALSE)
+df <- flownet_geometry()
+ggplot_flownet_only(df, axes = FALSE)
+ggplot_flownet_only(df, axes = TRUE)
 }

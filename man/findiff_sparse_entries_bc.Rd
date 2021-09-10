@@ -21,3 +21,7 @@ function to get sparse matrix element positions for flow net finite
 difference boundary conditions (known head, known flow or connected to
 another domain)
 }
+\examples{
+df <- flownet_geometry()
+ds <- findiff_sparse_entries_bc(df)
+}

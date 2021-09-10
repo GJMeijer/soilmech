@@ -82,26 +82,24 @@ Plot flow net and soil geometry for a dam/sheet pile problem
 }
 \examples{
 #default example
-df <- generate_flownet_properties()
+df <- flownet_geometry()
 ggplot_flownet_dam(df)
 
-#anisotropic permeability - 6 flow channels
-df <- generate_flownet_properties(kx = 4e-6, ky = 1e-6)
+#anisotropic permeability - with 6 flow channels
+df <- flownet_geometry(kx = 4e-6, ky = 1e-6)
 ggplot_flownet_dam(df, Nf = 6)
 
-#excavation next to river
-df <- generate_flownet_properties(
-  Lx = c(20, 20, 0.2, 5, 5),
-  Ly = c(10, 5, 5, 5, 2),
-  Ly_dry = c(2, 0, 0, 0, 0),
-  type1 = c("q", "q", "c", "c", "q"),
-  type2 = c("h", "c", "q", "c", "h"),
-  type3 = c("q", "c", "c", "q", "q"),
-  type4 = c("c", "q", "q", "q", "c"),
-  value1 = c(0, 0, 2, 3, 0),
-  value2 = c(12, 1, 0, 5, 6),
-  value3 = c(0, 3, 4, 0, 0),
-  value4 = c(2, 0, 0, 0, 4)
+#deep excavation example
+df <- flownet_geometry(
+  x = c(0, 5, 5.25, 30),
+  y = c(0, 5, 7.5, 15, 20),
+  ix = c(1, 1, 2, 3, 3, 3, 3),
+  iy = c(2, 1, 1, 1, 2, 3, 4),
+  bc_id = c(1, 6),
+  bc_edge = c(2, 2),
+  bc_type = c("h", "h"),
+  bc_value = c(7.5, 15),
+  dry = c(rep(FALSE, 6), TRUE)
 )
 ggplot_flownet_dam(df)
 }

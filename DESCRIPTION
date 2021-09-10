@@ -27,6 +27,7 @@ Imports:
     RColorBrewer,
     graphics,
     scales,
+    metR,
     plotly,
     stats,
     utils,
