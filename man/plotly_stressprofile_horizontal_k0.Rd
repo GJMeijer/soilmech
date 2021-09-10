@@ -2,7 +2,7 @@
 % Please edit documentation in R/stress_profiles_horizontal.R
 \name{plotly_stressprofile_horizontal_k0}
 \alias{plotly_stressprofile_horizontal_k0}
-\title{Plotly K0 trace}
+\title{Plotly K0 traces with depth}
 \usage{
 plotly_stressprofile_horizontal_k0(
   z,
@@ -49,7 +49,9 @@ depth `z`}
 a plotly object
 }
 \description{
-Plots two traces of vertical effective stress in a single plotly plot
+Plots traces of K0 (current coefficient of lateral earth pressure) and K0NC
+(coefficient of lateral earth pressure in the normally consolidated case)
+with depth in a single plotly plot
 }
 \examples{
 ds <- horizontal_stress_profile(q0 = 50)

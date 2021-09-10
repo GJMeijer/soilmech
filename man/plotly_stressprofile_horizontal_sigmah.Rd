@@ -2,7 +2,7 @@
 % Please edit documentation in R/stress_profiles_horizontal.R
 \name{plotly_stressprofile_horizontal_sigmah}
 \alias{plotly_stressprofile_horizontal_sigmah}
-\title{Plotly K0 trace}
+\title{Plotly horizontal stress profile}
 \usage{
 plotly_stressprofile_horizontal_sigmah(
   z,
@@ -49,7 +49,9 @@ each depth `z`}
 a plotly object
 }
 \description{
-Plots two traces of vertical effective stress in a single plotly plot
+Plots two traces of horizontal effective stress in a single plotly plot.
+One trace is for current state (may be overconsolidated), and one for the
+normally consolidated case.
 }
 \examples{
 ds <- horizontal_stress_profile(q0 = 50)

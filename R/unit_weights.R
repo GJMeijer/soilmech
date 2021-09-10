@@ -56,5 +56,5 @@ get_unitweight <- function(
   do$gamma_b_above <- round(do$gamma_b_above/round)*round
   do$gamma_b_below <- round(do$gamma_b_below/round)*round
   #return
-  do %>% dplyr::select(gamma_b_above, gamma_b_below)
+  do %>% dplyr::select(.data$gamma_b_above, .data$gamma_b_below)
 }

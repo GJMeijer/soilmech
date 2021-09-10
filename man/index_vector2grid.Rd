@@ -4,25 +4,28 @@
 \alias{index_vector2grid}
 \title{Get grid index of nodes in specific direction}
 \usage{
-index_vector2grid(i, nx, direction = "x", i0 = 0, real_only = FALSE, ...)
+index_vector2grid(i, nx, ny, direction = "x", i0 = 0, real_only = FALSE, ...)
 }
 \arguments{
 \item{i}{indices of nodes}
 
-\item{nx}{number of real nodes in x-direction}
+\item{nx, ny}{number of real nodes in x and y-direction}
 
 \item{direction}{direction of index to find. Should be `x` or `y`}
 
 \item{i0}{node starting number (index of first node minus 1)}
 
-\item{real_only}{if `TRUE`, only real nodes are numbered. if `FALSE`, all
-ghost nodes are included in the numbering as well}
+\item{real_only}{if `TRUE`, only include real nodes in numbering,}
+
+\item{...}{additional named arguments to pass to function}
 }
 \value{
 vector with domain indices in x or y-direction
 }
 \description{
-Get grid index of nodes in specific direction
+Gets the x or y position index from a list of node indices. For the
+node numbering system, see documentation of function
+`findiff_sparse_entries()`
 }
 \examples{
 #number of real nodes in grid
@@ -31,11 +34,11 @@ ny <- 3
 
 #real + ghost nodes
 i <- seq(nodes_total(nx, ny, real_only = FALSE))
-index_vector2grid(i, nx, direction = "x", real_only = FALSE)
-index_vector2grid(i, nx, direction = "y", real_only = FALSE)
+index_vector2grid(i, nx, ny, direction = "x", real_only = FALSE)
+index_vector2grid(i, nx, ny, direction = "y", real_only = FALSE)
 
 #real nodes only
 i <- seq(nodes_total(nx, ny, real_only = TRUE))
-index_vector2grid(i, nx, direction = "x", real_only = TRUE)
-index_vector2grid(i, nx, direction = "y", real_only = TRUE)
+index_vector2grid(i, nx, ny, direction = "x", real_only = TRUE)
+index_vector2grid(i, nx, ny, direction = "y", real_only = TRUE)
 }

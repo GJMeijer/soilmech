@@ -99,7 +99,7 @@ horizontal_stress_profile <- function(
   #get all depth levels + K0NC
   ds <- tibble::tibble(
     z = unique(c(seq(z_soil[1], z_max, z_interval), z_max)),
-    layer = floor(approx(dp$z0, dp$layer, xout = .data$z, yright = max(dp$layer))$y)
+    layer = floor(stats::approx(dp$z0, dp$layer, xout = .data$z, yright = max(dp$layer))$y)
   ) %>% dplyr::bind_rows(
     tibble::tibble(
       z = c(utils::tail(z_soil[z_soil < z_max], -1), z_max),
@@ -260,10 +260,11 @@ plotly_stressprofile_horizontal_sigmav <- function(
 }
 
 
-#' Plotly OCR trace
+#' Plotly OCR trace with depth
 #'
 #' @description
-#' Plots two traces of vertical effective stress in a single plotly plot
+#' Plots trace of OCR with depth, and add line for OCR=1 (normally
+#' consolidated soil)
 #'
 #' @param z array width depths
 #' @param OCR array with overconsolidation ratio's for each depth `z`
@@ -388,10 +389,12 @@ plotly_stressprofile_horizontal_ocr <- function(
 }
 
 
-#' Plotly K0 trace
+#' Plotly K0 traces with depth
 #'
 #' @description
-#' Plots two traces of vertical effective stress in a single plotly plot
+#' Plots traces of K0 (current coefficient of lateral earth pressure) and K0NC
+#' (coefficient of lateral earth pressure in the normally consolidated case)
+#' with depth in a single plotly plot
 #'
 #' @param z array width depths
 #' @param K0 current coefficient of lateral pressure for each depth `z`
@@ -521,10 +524,12 @@ plotly_stressprofile_horizontal_k0 <- function(
 }
 
 
-#' Plotly K0 trace
+#' Plotly horizontal stress profile
 #'
 #' @description
-#' Plots two traces of vertical effective stress in a single plotly plot
+#' Plots two traces of horizontal effective stress in a single plotly plot.
+#' One trace is for current state (may be overconsolidated), and one for the
+#' normally consolidated case.
 #'
 #' @param z array width depths
 #' @param sigma_h current horizontal effective stress for each depth `z`
@@ -815,4 +820,3 @@ plotly_soilstressprofile_horizontal <- function(
   #return
   return(plt)
 }
-

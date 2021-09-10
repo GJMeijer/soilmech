@@ -30,5 +30,6 @@ Imports:
     plotly,
     stats,
     utils,
-    magrittr
+    magrittr,
+    Matrix
 RoxygenNote: 7.1.1

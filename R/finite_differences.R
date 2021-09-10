@@ -184,9 +184,6 @@ findiff_sparse_entries <- function(
 }
 
 
-
-
-
 #' Get indices of all real nodes
 #'
 #' @description
@@ -279,13 +276,19 @@ index_edge <- function(nx, ny, edge, real_only = FALSE, i0 = 0, offset = 0, ...)
 
 #' Get grid index of nodes in specific direction
 #'
+#' @description
+#' Gets the x or y position index from a list of node indices. For the
+#' node numbering system, see documentation of function
+#' `findiff_sparse_entries()`
+#'
 #' @param i indices of nodes
-#' @param nx number of real nodes in x-direction
+#' @param nx,ny number of real nodes in x and y-direction
 #' @param direction direction of index to find. Should be `x` or `y`
 #' @param real_only if `TRUE`, only real nodes are numbered. if `FALSE`, all
 #'   ghost nodes are included in the numbering as well
 #' @param i0 node starting number (index of first node minus 1)
-#' @param real_only
+#' @param real_only if `TRUE`, only include real nodes in numbering,
+#' @param ... additional named arguments to pass to function
 #' @return vector with domain indices in x or y-direction
 #' @examples
 #' #number of real nodes in grid
@@ -294,16 +297,16 @@ index_edge <- function(nx, ny, edge, real_only = FALSE, i0 = 0, offset = 0, ...)
 #'
 #' #real + ghost nodes
 #' i <- seq(nodes_total(nx, ny, real_only = FALSE))
-#' index_vector2grid(i, nx, direction = "x", real_only = FALSE)
-#' index_vector2grid(i, nx, direction = "y", real_only = FALSE)
+#' index_vector2grid(i, nx, ny, direction = "x", real_only = FALSE)
+#' index_vector2grid(i, nx, ny, direction = "y", real_only = FALSE)
 #'
 #' #real nodes only
 #' i <- seq(nodes_total(nx, ny, real_only = TRUE))
-#' index_vector2grid(i, nx, direction = "x", real_only = TRUE)
-#' index_vector2grid(i, nx, direction = "y", real_only = TRUE)
+#' index_vector2grid(i, nx, ny, direction = "x", real_only = TRUE)
+#' index_vector2grid(i, nx, ny, direction = "y", real_only = TRUE)
 #' @export
 
-index_vector2grid <- function(i, nx, direction = "x", i0 = 0, real_only = FALSE, ...) {
+index_vector2grid <- function(i, nx,ny, direction = "x", i0 = 0, real_only = FALSE, ...) {
   if (real_only == TRUE) {
     if (direction == "x") {
       return(1 + ((i - i0) - 1)%%nx)
@@ -323,16 +326,25 @@ index_vector2grid <- function(i, nx, direction = "x", i0 = 0, real_only = FALSE,
 #' Get array index of node based on x and y-indices
 #'
 #' @description
+#' Get the indices in the 1-D node array for rectangle with regularly spaced
+#' nodes, based on x and y-position indices. For the ndde numbering system
+#' used, see documentation of function `findiff_sparse_entries()`
 #'
 #' @param nx,ny number of real nodes in x and y-direction
 #' @param ix,iy scalar of x and y-index. If one of these is left empty
 #'   (`NULL`), all array indices in that row or column are returned
+#' @param i0 offset for the index of the first node
 #' @param real_only if `TRUE`, the grid is assumed to contain only real nodes,
 #'   so there are `nx*ny` nodes. If `FALSE`, the grid is assumed to contain
 #'   ghost nodes on the sides of each of the four edges of the grid, resulting
 #'   in `nx*ny + 2*nx + 2*ny` nodes. These are numbered in row-wise order,
 #'   starting with the left-most ghost node underneath the lower edge
 #' @param ... extra arguments
+#' @return array of indices
+#' @examples
+#' index_grid2vector(4, 3, ix = 2, real_only = TRUE)
+#' index_grid2vector(4, 3, ix = 2, real_only = FALSE)
+#' @export
 
 index_grid2vector <- function(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = FALSE, ...) {
   if (real_only == TRUE) {
@@ -374,6 +386,7 @@ index_grid2vector <- function(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = 
 #' @param nx,ny number of real nodes on the grid
 #' @param Lx,Ly length of grid in x and y direction
 #' @param x0,y0 position of origin of the grid
+#' @param ... additional named arguments to pass to function
 #' @importFrom magrittr `%>%`
 #' @return a tibble with fields `x` and `y` for positions, and `id` to indicate
 #'   which grid the point belongs to
@@ -402,71 +415,3 @@ nodal_coordinates_real <- function(nx, ny, Lx = 1, Ly = 1, x0 = 0, y0 = 0, ...) 
       }
   )
 }
-
-
-###########
-### OLD ###
-###########
-
-
-
-
-#' Get indices of nodes bordering nodes
-#'
-#' @description
-#' Get the indices of neighbouring nodes in a rectangular grid with nodes.
-#' For node numbering, see function `findiff_sparse_entries()`
-#'
-#' @inheritParams index_edge
-#' @param i array with node indices
-#' @param offset number of nodes to move in specific direction
-#' @importFrom magrittr `%>%`
-#' @return an array with node indices for neighbours
-#' @export
-
-index_neighbour <- function(i, nx, ny, edge, offset = 1, i0 = 0, real_only = FALSE, ...) {
-  #create tibble
-  df <- tibble::tibble(i = i, nx = nx, ny = ny, edge = edge, i0 = i0, offset = offset, ioffset = 0)
-  #grid with only real nodes
-  if (real_only == TRUE) {
-    #edge 1 (left)
-    ind <- ((1 + (df$i-1)%%df$nx) <= (df$nx - df$offset)) & (df$edge == 1)
-    df$ioffset[ind] <- df$i[ind] + 1
-    #edge 2 (top)
-    ind <- ((1 + (df$i-1)%%df$nx) <= (df$nx - df$offset)) & (df$edge == 1)
-    df$ioffset[ind] <- df$i[ind] + 1
-    #edge 3 (right)
-    ind <- ((1 + (df$i-1)%%df$nx) > (df$offset)) & (df$edge == 3)
-    df$ioffset[ind] <- df$i[ind] - 1
-    #edge 4 (bottom)
-  } else
-
-
-  tibble::tibble(i = i, nx = nx, ny = ny, edge = edge, i0 = i0) %>%
-    dplyr::mutate(
-      inew = ifelse(
-        edge == 1,
-        i - 1,
-        ifelse(
-          edge == 2,
-          ifelse(
-            ((i - i0) >= (nx + 2)*ny) | ((i - i0) <= nx),
-            i + (nx + 1),
-            i + (nx + 2)
-          ),
-          ifelse(
-            edge == 3,
-            i + 1,
-            ifelse(
-              ((i - i0) <= (2*nx + 1)) | ((i - i0) > ((ny + 1)*(nx + 2) - 2)),
-              i - (nx + 1),
-              i - (nx + 2)
-            )
-          )
-        )
-      )
-    ) %>%
-    dplyr::pull(inew)
-}
-
-

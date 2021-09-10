@@ -12,6 +12,8 @@ index_grid2vector(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = FALSE, ...)
 \item{ix, iy}{scalar of x and y-index. If one of these is left empty
 (`NULL`), all array indices in that row or column are returned}
 
+\item{i0}{offset for the index of the first node}
+
 \item{real_only}{if `TRUE`, the grid is assumed to contain only real nodes,
 so there are `nx*ny` nodes. If `FALSE`, the grid is assumed to contain
 ghost nodes on the sides of each of the four edges of the grid, resulting
@@ -20,6 +22,15 @@ starting with the left-most ghost node underneath the lower edge}
 
 \item{...}{extra arguments}
 }
+\value{
+array of indices
+}
 \description{
-
+Get the indices in the 1-D node array for rectangle with regularly spaced
+nodes, based on x and y-position indices. For the ndde numbering system
+used, see documentation of function `findiff_sparse_entries()`
+}
+\examples{
+index_grid2vector(4, 3, ix = 2, real_only = TRUE)
+index_grid2vector(4, 3, ix = 2, real_only = FALSE)
 }

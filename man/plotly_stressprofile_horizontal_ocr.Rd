@@ -2,7 +2,7 @@
 % Please edit documentation in R/stress_profiles_horizontal.R
 \name{plotly_stressprofile_horizontal_ocr}
 \alias{plotly_stressprofile_horizontal_ocr}
-\title{Plotly OCR trace}
+\title{Plotly OCR trace with depth}
 \usage{
 plotly_stressprofile_horizontal_ocr(
   z,
@@ -45,7 +45,8 @@ plotly_stressprofile_horizontal_ocr(
 a plotly object
 }
 \description{
-Plots two traces of vertical effective stress in a single plotly plot
+Plots trace of OCR with depth, and add line for OCR=1 (normally
+consolidated soil)
 }
 \examples{
 ds <- horizontal_stress_profile(q0 = 50)

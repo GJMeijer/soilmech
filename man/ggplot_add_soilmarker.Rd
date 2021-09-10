@@ -24,6 +24,8 @@ ggplot_add_soilmarker(
 \item{line_size}{thickness of lines}
 
 \item{colour_soil}{line colour for all lines}
+
+\item{n}{number of lines to plot underneath the water table, as part of the symbol}
 }
 \value{
 ggplot object with added water table marker

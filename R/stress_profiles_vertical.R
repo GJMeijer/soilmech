@@ -35,7 +35,7 @@
 #'   q = 10,
 #'   z_interval = 1
 #' )
-#' @export`
+#' @export
 
 vertical_stress_profile <- function(
   z_soil = 0,
@@ -68,7 +68,7 @@ vertical_stress_profile <- function(
         sigma_v = stats::approx(df$z, df$sigma_v, xout = z_add)$y
       )
     ) %>%
-      dplyr::arrange(z)
+      dplyr::arrange(.data$z)
   }
   #add additional fields if inputted
   if (length(list(...)) > 0) {
@@ -264,6 +264,7 @@ tabulate_vertical_stress_profile <- function(
 #'   z_watertable = 2
 #' )
 #' plotly_stressprofile_vertical(df)
+#' @export
 
 plotly_stressprofile_vertical <- function(
   df,
@@ -468,6 +469,7 @@ plotly_stressprofile_vertical <- function(
   #return
   return(plt)
 }
+
 
 #' plotly soil profiles
 #'

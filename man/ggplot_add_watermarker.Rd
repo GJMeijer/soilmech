@@ -17,6 +17,8 @@ ggplot_add_watermarker(
 \arguments{
 \item{plt}{ggplot object}
 
+\item{xc, yc}{x and y-position where marker touches water table}
+
 \item{scale}{scaling factor for marker. Default height is approx 1}
 
 \item{line_size}{thickness of lines}
@@ -24,8 +26,6 @@ ggplot_add_watermarker(
 \item{fill_water}{fill colour for triangle}
 
 \item{colour_water}{line colour for all lines}
-
-\item{x, y}{x and y-position where marker touches water table}
 }
 \value{
 ggplot object with added water table marker

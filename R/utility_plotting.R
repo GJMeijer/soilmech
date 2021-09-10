@@ -129,7 +129,7 @@ round_limits <- function(
 #' horizontal lines) to an existing ggplot
 #'
 #' @param plt ggplot object
-#' @param x,y x and y-position where marker touches water table
+#' @param xc,yc x and y-position where marker touches water table
 #' @param scale scaling factor for marker. Default height is approx 1
 #' @param line_size thickness of lines
 #' @param fill_water fill colour for triangle
@@ -205,6 +205,7 @@ ggplot_add_watermarker <- function(
 #' @param scale scaling factor for marker. Default width is approx 1
 #' @param line_size thickness of lines
 #' @param colour_soil line colour for all lines
+#' @param n number of lines to plot underneath the water table, as part of the symbol
 #' @return ggplot object with added water table marker
 #' @examples
 #' #generate simple plot
