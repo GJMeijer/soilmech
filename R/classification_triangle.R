@@ -602,6 +602,44 @@ ggplot_classificationtriangle_addcrosshairs_part2 <- function(
 }
 
 
+#' ggplot classification triangle
+#'
+#' @description
+#' ggplot both parts of the BS classification triangle together into a single
+#' ggplot object
+#'
+#' @param gravel mass of gravel for crosshair annotation
+#' @param sand mass of sand for crosshair annotation
+#' @param silt mass of silt for crosshair annotation
+#' @param clay mass of clay for crosshair annotation
+#' @param group grouping for crosshair annotation (label)
+#' @return a ggplot object
+#' @examples
+#' ggplot_classificationtriangle(30,20,15,10)
+#' @export
+
+ggplot_classificationtriangle <- function(
+  gravel,
+  sand,
+  silt,
+  clay,
+  group = NULL
+) {
+  #normalise & express in percentages for easier comparion
+  total <- gravel + sand + silt + clay
+  gravel <- gravel/total
+  sand <- sand/total
+  silt <- silt/total
+  clay <- clay/total
+  fines <- silt + clay
+  #create plots
+  plt1 <- ggplot_classificationtriangle_part1(gravel = gravel, sand = sand, fines = fines, group = group)
+  plt2 <- ggplot_classificationtriangle_part2(fines = fines, clay = clay, group = group)
+  #combine and return
+  gridExtra::grid.arrange(plt1, plt2, ncol = 2)
+}
+
+
 #' Classify soil using BS classification triangle
 #'
 #' @description
