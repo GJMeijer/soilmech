@@ -615,26 +615,36 @@ ggplot_classificationtriangle_addcrosshairs_part2 <- function(
 #' @param group grouping for crosshair annotation (label)
 #' @return a ggplot object
 #' @examples
+#' #empty chart
+#' ggplot_classificationtriangle()
+#'
+#' #example with annotations
 #' ggplot_classificationtriangle(30,20,15,10)
 #' @export
 
 ggplot_classificationtriangle <- function(
-  gravel,
-  sand,
-  silt,
-  clay,
+  gravel = 0,
+  sand = 0,
+  silt = 0,
+  clay = 0,
   group = NULL
 ) {
-  #normalise & express in percentages for easier comparion
+  #total mass
   total <- gravel + sand + silt + clay
-  gravel <- gravel/total
-  sand <- sand/total
-  silt <- silt/total
-  clay <- clay/total
-  fines <- silt + clay
-  #create plots
-  plt1 <- ggplot_classificationtriangle_part1(gravel = gravel, sand = sand, fines = fines, group = group)
-  plt2 <- ggplot_classificationtriangle_part2(fines = fines, clay = clay, group = group)
+  if (total > 0) {
+    #normalise to fractions
+    gravel <- gravel/total
+    sand <- sand/total
+    silt <- silt/total
+    clay <- clay/total
+    fines <- silt + clay
+    #create plots
+    plt1 <- ggplot_classificationtriangle_part1(gravel = gravel, sand = sand, fines = fines, group = group)
+    plt2 <- ggplot_classificationtriangle_part2(fines = fines, clay = clay, group = group)
+  } else {
+    plt1 <- ggplot_classificationtriangle_part1()
+    plt2 <- ggplot_classificationtriangle_part2()
+  }
   #combine and return
   gridExtra::grid.arrange(plt1, plt2, ncol = 2)
 }
