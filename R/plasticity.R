@@ -192,13 +192,18 @@ ggplot_fallcone <- function(
   xlim <- round_limits(c(0.95*min(c(w, wL)), 1.05*max(c(w, wL))))
   ylim <- round_limits(c(0.95*min(c(u, 20)), 1.05*max(c(u, 20))))
   #plot
-  plt <- ggplot2::ggplot(
-    dft,
-    ggplot2::aes(x = .data$w, y = .data$u)
-  ) +
+  plt <- ggplot2::ggplot() +
     theme_soilmech() +
-    ggplot2::geom_line(color = colo[3], linetype = 2) +
-    ggplot2::geom_point(color = colo[2]) +
+    ggplot2::geom_line(
+      data = dft,
+      ggplot2::aes(x = .data$w, y = .data$u),
+      color = colo[3],
+      linetype = 2
+    ) +
+    ggplot2::geom_point(
+      ggplot2::aes(x = w, y = u),
+      color = colo[2]
+    ) +
     ggplot2::coord_cartesian(
       xlim = xlim,
       ylim = ylim,
