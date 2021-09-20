@@ -66,6 +66,10 @@ works properly}
 Defines a geometry for a flow net problem. rectangular domains are defined
 using a grid system. For each domain, horizontal and vertical permeabilities
 may be defined seperately.
+
+Domains that are next to each other in the grid are automatically connected.
+All boundary conditions are assumed impermeable, unless otherwise defined
+using the inputs `bc_id`, `bc_edge`, `bc_type` and `bc_value`.
 }
 \examples{
 flownet_geometry()

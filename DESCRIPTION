@@ -34,3 +34,7 @@ Imports:
     magrittr,
     Matrix
 RoxygenNote: 7.1.1
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

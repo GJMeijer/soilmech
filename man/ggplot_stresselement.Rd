@@ -15,7 +15,9 @@ ggplot_stresselement(
   arrow_length = 0.5,
   palette = "Set1",
   fill_soil = "#d3bc5f",
-  color_soil = "#65571d"
+  color_soil = "#65571d",
+  coordinate_system = TRUE,
+  coordinate_arrow_length = 0.5
 )
 }
 \arguments{
@@ -40,6 +42,12 @@ ggplot_stresselement(
 \item{fill_soil}{color of fill of soil cube}
 
 \item{color_soil}{color of outline of soil cube}
+
+\item{coordinate_system}{if `TRUE`, show arrows with the coordinate system
+used}
+
+\item{coordinate_arrow_length}{length or coordinate system arrows. Defined
+as fraction of `arrow_length`}
 }
 \value{
 ggplot object

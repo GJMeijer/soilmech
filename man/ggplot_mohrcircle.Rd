@@ -16,7 +16,7 @@ ggplot_mohrcircle(
   n_circle = 181,
   color_circle = "black",
   color_lines = "grey50",
-  effective_stress = TRUE
+  effective_stress = FALSE
 )
 }
 \arguments{

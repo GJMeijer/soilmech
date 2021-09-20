@@ -1,0 +1,53 @@
+---
+title: "vignette_soilmech"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette_soilmech}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(soilmech)
+```
+
+This R package contains many functions to create charts related to soil mechanics and foundation design, or to demonstrate key concepts.
+
+
+# Particle size distributions
+
+To create an empty particle size distribution chart:
+```{r, fig.dim = c(7, 3.5)}
+ggplot_psdchart()
+```
+
+Data traces can be added (use `add_points == TRUE` to also add the data points). x-axis may be trimmed as necessary:
+```{r, fig.dim = c(7, 3.5)}
+ggplot_psdchart(
+  trace_diameter = rep(c(0.01, 0.1, 1), 2),
+  trace_passing = c(0.2, 0.5, 0.9, 0.1, 0.3, 0.6),
+  trace_group = rep(c("A", "B"), each = 3),
+  add_points = TRUE,
+  legend_position = "right",
+  xlim = c(0.002, 2)
+)
+```
+
+You can hightlight specifc points on a single trace using crosshairs:
+```{r, fig.dim = c(7, 3.5)}
+ggplot_psdchart(
+  trace_diameter = c(0.002, 0.01, 0.03, 0.1, 0.3, 1, 10),
+  trace_passing = c(0.05, 0.1, 0.3, 0.5, 0.6, 0.7, 0.9),
+  crosshairs_diameter = c(0.01, 0.1),
+  crosshairs_passing = c(0.1, 0.5),
+  crosshairs_group = c("D[10]==0.01~mm", "D[50]==0.10~mm"),
+  crosshairs_parse = TRUE
+)
+```

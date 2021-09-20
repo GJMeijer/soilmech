@@ -5,6 +5,10 @@
 #' using a grid system. For each domain, horizontal and vertical permeabilities
 #' may be defined seperately.
 #'
+#' Domains that are next to each other in the grid are automatically connected.
+#' All boundary conditions are assumed impermeable, unless otherwise defined
+#' using the inputs `bc_id`, `bc_edge`, `bc_type` and `bc_value`.
+#'
 #' @param x x-coordinates of boundary lines in the grid
 #' @param y y-coordinates of boundary lines in the grid
 #' @param ix x-index in grid of soil rectangle (length n)

@@ -59,6 +59,10 @@ rotate_stresses <- function(sigx, sigz, tau, theta) {
 #' @param palette RColorBrewer color palette to use
 #' @param fill_soil color of fill of soil cube
 #' @param color_soil color of outline of soil cube
+#' @param coordinate_system if `TRUE`, show arrows with the coordinate system
+#'   used
+#' @param coordinate_arrow_length length or coordinate system arrows. Defined
+#'   as fraction of `arrow_length`
 #' @importFrom magrittr `%>%`
 #' @importFrom rlang .data
 #' @return ggplot object
@@ -77,7 +81,9 @@ ggplot_stresselement <- function(
   arrow_length = 0.5,
   palette = "Set1",
   fill_soil = "#d3bc5f",
-  color_soil = "#65571d"
+  color_soil = "#65571d",
+  coordinate_system = TRUE,
+  coordinate_arrow_length = 0.5
 ){
   #stress invariants
   p <- 0.5*(sigx + sigz)
@@ -200,6 +206,46 @@ ggplot_stresselement <- function(
         arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "lines"))
       )
   }
+  #add coordinate system
+  if (coordinate_system == TRUE){
+    plt <- plt +
+      ggplot2::annotate(
+        "segment",
+        x = -(0.5 + arrow_length + arrow_offset),
+        y = (0.5 + arrow_length + arrow_offset),
+        xend = -(0.5 + arrow_length + arrow_offset) + coordinate_arrow_length*arrow_length,
+        yend = (0.5 + arrow_length + arrow_offset),
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "lines")),
+        color = "black"
+      ) +
+      ggplot2::annotate(
+        "segment",
+        x = -(0.5 + arrow_length + arrow_offset),
+        y = (0.5 + arrow_length + arrow_offset),
+        xend = -(0.5 + arrow_length + arrow_offset),
+        yend = (0.5 + arrow_length + arrow_offset) - coordinate_arrow_length*arrow_length,
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "lines")),
+        color = "black"
+      ) +
+      ggplot2::annotate(
+        "text",
+        x = -(0.5 + arrow_length + arrow_offset) + coordinate_arrow_length*(arrow_length + arrow_offset),
+        y = (0.5 + arrow_length + arrow_offset),
+        label = "x",
+        color = "black",
+        hjust = 0,
+        vjust = 0.5
+      ) +
+      ggplot2::annotate(
+        "text",
+        x = -(0.5 + arrow_length + arrow_offset),
+        y = (0.5 + arrow_length + arrow_offset) - coordinate_arrow_length*(arrow_length + arrow_offset),
+        label = "z",
+        color = "black",
+        hjust = 0.5,
+        vjust = 1
+      )
+  }
   #return
   return(plt)
 }
@@ -236,7 +282,7 @@ ggplot_mohrcircle <- function(
   n_circle = 181,
   color_circle = "black",
   color_lines = "grey50",
-  effective_stress = TRUE
+  effective_stress = FALSE
 ){
   #stress invariants
   p <- 0.5*(sigx + sigz)
