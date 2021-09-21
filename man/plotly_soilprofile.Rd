@@ -89,6 +89,15 @@ hoverlabels}
 Creates a plotly object with the soil profile and soil properties
 }
 \examples{
+#ponding water
+plotly_soilprofile(
+  z_soil = 0,
+  z_max = 5,
+  z_watertable = -5,
+  gamma_b = 20
+)
+
+#water table within soil
 plotly_soilprofile(
   z_soil = c(0, 3, 7),
   gamma_b = c(15, 16, 20),

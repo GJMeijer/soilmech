@@ -52,6 +52,16 @@ Creates a plotly plot with the soil profile on the left-hand side,
 and the stress profiles on the right-hand side
 }
 \examples{
+#dry soil - total stress only
+plotly_soilstressprofile_vertical(
+  z_soil = 0,
+  z_watertable = 20,
+  z_max = 6,
+  z_interval = 1,
+  traces = c("sigma_v")
+)
+
+#partly saturated soil
 plotly_soilstressprofile_vertical(
   z_soil = c(0, 4, 8),
   z_watertable = 2,

@@ -4,7 +4,13 @@
 \alias{ggplot_classificationtriangle}
 \title{ggplot classification triangle}
 \usage{
-ggplot_classificationtriangle(gravel, sand, silt, clay, group = NULL)
+ggplot_classificationtriangle(
+  gravel = 0,
+  sand = 0,
+  silt = 0,
+  clay = 0,
+  group = NULL
+)
 }
 \arguments{
 \item{gravel}{mass of gravel for crosshair annotation}
@@ -25,5 +31,9 @@ ggplot both parts of the BS classification triangle together into a single
 ggplot object
 }
 \examples{
+#empty chart
+ggplot_classificationtriangle()
+
+#example with annotations
 ggplot_classificationtriangle(30,20,15,10)
 }
