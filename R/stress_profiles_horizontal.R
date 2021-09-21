@@ -820,3 +820,148 @@ plotly_soilstressprofile_horizontal <- function(
   #return
   return(plt)
 }
+
+
+#' Plotly calculation process of current horizontal effective stresses
+#'
+#' @description
+#' Function takes data for two soil profiles (current and historical when
+#' effective stress was largests) and draws soil profiles, profiles with
+#' vertical effective stress, OCR, K0 and horizontal effective stress with
+#' depth
+#'
+#' @inheritParams horizontal_stress_profile
+#' @param ylab depth axis label
+#' @param mode plotly trace mode, e.g. `lines`
+#' @param nrow number of rows for subplots
+#' @param width width of plot
+#' @param height height of plot
+#' @return a plotly object
+#' @examples
+#' #removal of surcharge
+#' plotly_overconsolidation_profile(q = 0, q0 = 100)
+#'
+#' @export
+
+plotly_overconsolidation_profile <- function(
+  z_soil = c(0, 4),
+  z_watertable = 4,
+  q = 0,
+  gamma_b = c(18, 20),
+  z_soil0 = NULL,
+  z_watertable0 = NULL,
+  q0 = 100,
+  gamma_b0 = NULL,
+  z_max = 10,
+  z_interval = 0.1,
+  gamma_w = 10,
+  phi_deg = c(35, 15),
+  description = "sand",
+  ylab = "Depth [m]",
+  mode = "lines",
+  nrow = 1,
+  width = 700,
+  height = 350
+){
+  #assume soil profile same as current, if no input provided
+  if (is.null(z_soil0)) {
+    z_soil0 <- z_soil
+  }
+  if (is.null(z_watertable0)) {
+    z_watertable0 <- z_watertable
+  }
+  if (is.null(q0)) {
+    q0 <- q
+  }
+  if (is.null(gamma_b0)) {
+    gamma_b0 <- gamma_b
+  }
+  #calculate stresses
+  ds <- horizontal_stress_profile(
+    z_soil = z_soil,
+    z_watertable = z_watertable,
+    q = q,
+    gamma_b = gamma_b,
+    z_soil0 = z_soil0,
+    z_watertable0 = z_watertable0,
+    q0 = q0,
+    gamma_b0 = gamma_b0,
+    z_max = z_max,
+    z_interval = z_interval,
+    gamma_w = gamma_w,
+    phi_deg = phi_deg,
+    description = description
+  )
+  #generate plots
+  plt_prof0 <- plotly_soilprofile(
+    z_soil0,
+    z_watertable = z_watertable0,
+    z_max = z_max,
+    q = q0,
+    gamma_b = gamma_b0
+  )
+  plt_prof <- plotly_soilprofile(
+    z_soil,
+    z_watertable = z_watertable,
+    z_max = z_max,
+    q = q,
+    gamma_b = gamma_b,
+    fields_hover = c("gamma_b", "thickness"),
+    fields_label = c("gamma_b"),
+    description = description,
+    phi_deg = phi_deg
+  )
+  plt_sigv <- plotly_stressprofile_horizontal_sigmav(
+    ds$z,
+    ds$`sigma'_v0`,
+    ds$`sigma'_v`,
+    mode = mode,
+    ylab = ylab
+  )
+  plt_OCR <- plotly_stressprofile_horizontal_ocr(
+    ds$z,
+    ds$OCR,
+    mode = mode,
+    ylab = ylab
+  )
+  #merge plots together
+  plt <- plotly::subplot(
+    plt_prof0, plt_prof, plt_sigv, plt_OCR,
+    shareY = TRUE,
+    titleX = TRUE,
+    margin = 0.025,
+    nrows = nrow
+  )
+  #add titles for profiles
+  annotations = list(
+    list(
+      x = 1/8,
+      y = 1.0,
+      text = "Historic",
+      xref = "paper",
+      yref = "paper",
+      xanchor = "center",
+      yanchor = "bottom",
+      showarrow = FALSE
+    ),
+    list(
+      x = 3/8,
+      y = 1,
+      text = "Current",
+      xref = "paper",
+      yref = "paper",
+      xanchor = "center",
+      yanchor = "bottom",
+      showarrow = FALSE
+    )
+  )
+  plt <- plotly::layout(
+    plt,
+    annotations = annotations
+  )
+  #set plot sizes
+  plt$width <- width
+  plt$height <- height
+  #return
+  return(plt)
+}

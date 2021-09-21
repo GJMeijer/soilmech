@@ -365,7 +365,7 @@ plotly_stressprofile_vertical <- function(
     opacity = 0
   )
   #plot total stress
-  if ("sigma_v" %in% colnames(df)) {
+  if (("sigma_v" %in% colnames(df)) & ("sigma_v" %in% traces)) {
     plt <- plotly::add_trace(
       plt,
       name = "Vertical total stress",
@@ -387,7 +387,7 @@ plotly_stressprofile_vertical <- function(
     )
   }
   #plot pore water pressure
-  if ("u" %in% colnames(df)) {
+  if (("u" %in% colnames(df)) & ("u" %in% traces)) {
     #plot
     plt <- plotly::add_trace(
       plt,
@@ -410,7 +410,7 @@ plotly_stressprofile_vertical <- function(
     )
   }
   #plot effective stress
-  if ("sigma'_v" %in% colnames(df)) {
+  if (("sigma'_v" %in% colnames(df)) & ("sigma'_v" %in% traces)) {
     #plot
     plt <- plotly::add_trace(
       plt,
@@ -497,6 +497,15 @@ plotly_stressprofile_vertical <- function(
 #' @param title plot title
 #' @param ... additional fields used for plotting labels
 #' @examples
+#' #ponding water
+#' plotly_soilprofile(
+#'   z_soil = 0,
+#'   z_max = 5,
+#'   z_watertable = -5,
+#'   gamma_b = 20
+#' )
+#'
+#' #water table within soil
 #' plotly_soilprofile(
 #'   z_soil = c(0, 3, 7),
 #'   gamma_b = c(15, 16, 20),
@@ -543,7 +552,9 @@ plotly_soilprofile <- function(
     z0 = z_soil,
     z1 = pmin(z_max, c(z_soil[2:length(z_soil)], z_max)),
     gamma_b = gamma_b
-  )
+  ) %>%
+    tidyr::drop_na() %>%
+    dplyr::filter(.data$z1 > .data$z0)
   #labels
   if (!is.null(description)) {
     ds$description_label <- description
@@ -672,6 +683,18 @@ plotly_soilprofile <- function(
     showlegend = FALSE,
     hoverinfo = "skip"
   )
+  if (z_watertable < z_soil[1]) {
+    plt <- plt %>% plotly::add_trace(
+      type = "scatter",
+      mode = "text",
+      x = 0.5*(xlim[2] - xlim[1]),
+      y = 0.5*(z_watertable + z_soil[1]),
+      text = paste0("\u03B3<sub>w</sub> = ", gamma_w, " kN/m\u00b3"),
+      textposition = "middle center",
+      showlegend = FALSE,
+      hoverinfo = "skip"
+    )
+  }
   #surcharge arrows
   if (!dplyr::near(q, 0)) {
     darr <- tibble::tibble(
@@ -744,6 +767,16 @@ plotly_soilprofile <- function(
 #' @param width width of the output plot
 #' @param height height of the output plot
 #' @examples
+#' #dry soil - total stress only
+#' plotly_soilstressprofile_vertical(
+#'   z_soil = 0,
+#'   z_watertable = 20,
+#'   z_max = 6,
+#'   z_interval = 1,
+#'   traces = c("sigma_v")
+#' )
+#'
+#' #partly saturated soil
 #' plotly_soilstressprofile_vertical(
 #'   z_soil = c(0, 4, 8),
 #'   z_watertable = 2,
