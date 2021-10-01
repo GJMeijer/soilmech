@@ -172,7 +172,7 @@ ggplot_stress_uniformstrip <- function(
   dlab$xB[dlab$I == 0] <- 0.5*(xlim[2] + 0.5)
   dlab$zB[dlab$I == 0] <- 0
   dlab$label <- dlab$I
-  dlab$label[dlab$I == 0.0] <- "I==0.0"
+  dlab$label[dlab$I == 0.0] <- paste("I[", direction, "]==0.0")
   #plot
   plt <- ggplot2::ggplot() +
     theme_soilmech() +
@@ -251,7 +251,7 @@ ggplot_stress_uniformstrip <- function(
       plt,
       x = xB,
       y = zB,
-      group = paste0("I==", round(I, nround)),
+      group = paste0("I[", direction, "]==", round(I, nround)),
       add_colour_scale = TRUE,
       label_parse = TRUE,
       xlim = xlim[1],
@@ -324,7 +324,7 @@ ggplot_stress_triangularstrip <- function(
   dlab$xB[dlab$I == 0] <- 0.5*(xlim[2] + 1)
   dlab$zB[dlab$I == 0] <- 0
   dlab$label <- dlab$I
-  dlab$label[dlab$I == 0.0] <- "I==0.0"
+  dlab$label[dlab$I == 0.0] <- paste0("I[", direction, "]==0.0")
   #plot
   plt <- ggplot2::ggplot() +
     theme_soilmech() +
@@ -399,7 +399,7 @@ ggplot_stress_triangularstrip <- function(
       plt,
       x = xB,
       y = zB,
-      group = paste0("I==", round(I, nround)),
+      group = paste0("I[", direction, "]==", round(I, nround)),
       add_colour_scale = TRUE,
       label_parse = TRUE,
       xlim = xlim[1],
@@ -490,7 +490,7 @@ ggplot_stress_fadum <- function(
     ggplot2::theme(legend.position = "none") +
     ggplot2::geom_line(size = 0.3, show.legend = FALSE) +
     ggplot2::xlab("L/z [-]") +
-    ggplot2::ylab("Influence factor I [-]") +
+    ggplot2::ylab(expression("Influence factor"~I[z]~"[-]")) +
     ggplot2::coord_cartesian(
       xlim = c(min(dl$xz), max(dl$xz)),
       ylim = c(0, 0.26),
@@ -518,7 +518,7 @@ ggplot_stress_fadum <- function(
   #add crosshairs
   if (!is.null(Bz) & !is.null(Lz)){
     I <- influencefactor_cornerrectangle(Bz, Lz, direction = "z")
-    lab <- paste("I==", round(I, nround))
+    lab <- paste("I[z]==", round(I, nround))
     plt <- ggplot_addcrosshairs(
       plt,
       Bz,
@@ -594,7 +594,7 @@ ggplot_stress_giroud <- function(
       ggplot2::aes(x = .data$I, y = log10(.data$zB), group = as.factor(.data$LB)),
       size = 0.3, show.legend = FALSE
     ) +
-    ggplot2::xlab("Influence factor I [-]") +
+    ggplot2::xlab(expression("Influence factor"~I[z]~"[-]")) +
     ggplot2::ylab("z/B [-]") +
     ggplot2::coord_cartesian(
       xlim = c(0, 0.25),
@@ -630,7 +630,7 @@ ggplot_stress_giroud <- function(
       influencefactor_cornerrectangle(1/zB, LB/zB, direction = "z")
     )
     zB <- pmax(0.1, zB)
-    lab <- paste0("I==", round(I, nround))
+    lab <- paste0("I[z]==", round(I, nround))
     plt <- ggplot_addcrosshairs(
       plt,
       I,
