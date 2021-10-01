@@ -413,6 +413,8 @@ nodal_coordinates_real <- function(nx, ny, x0 = 0, y0 = 0, x1 = 1, y1 = 1, id = 
     dplyr::rowwise() %>%
     dplyr::summarise(
       id = id,
+      ix = rep(seq(nx), ny),
+      iy = rep(seq(ny), each = nx),
       x = rep(seq(x0, x1, l = nx), ny),
       y = rep(seq(y0, y1, l = ny), each = nx)
     )

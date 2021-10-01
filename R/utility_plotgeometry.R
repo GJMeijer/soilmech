@@ -177,9 +177,9 @@ ggplot_add_polygon <- function(
   type = "soil",
   fill = NULL,
   settings = tibble::tibble(
-    id = c("soil", "water", "structure"),
-    fill = c("#d3bc5f" ,"#2a7fff", "#333333"),
-    colour = c(NA, NA, NA),
+    id = c("soil", "saturated", "water", "structure"),
+    fill = c("#d3bc5f" ,"#aebab7", "#2a7fff", "#333333"),
+    colour = c(NA, NA, NA, NA),
   )
 ) {
   #global settings: soil - water - structure
@@ -223,6 +223,7 @@ ggplot_add_polygon <- function(
 #' @param settings dataframe with default settings for soil, water and
 #'   structure elements
 #' @param linesize line size thickness
+#' @importFrom rlang .data
 #' @return ggplot object
 #' @export
 
@@ -267,7 +268,7 @@ ggplot_add_surface <- function(
   #add soil surface markers
   if (sett$scale_marker > 0) {
     dfm <- df %>%
-      dplyr::group_by(group) %>%
+      dplyr::group_by(.data$group) %>%
       dplyr::slice_head(n = 2) %>%
       dplyr::summarise(
         xc = .data$x[1] + sett$pos_marker*(.data$x[2] - .data$x[1]),
@@ -312,8 +313,9 @@ ggplot_add_surface <- function(
 #' @description
 #' Wrapper function to plot a soil, water and structure geometry
 #'
-#' @param pol_soil tibble with soil polygons
 #' @param pol_water tibble with surface water polygons
+#' @param pol_soil tibble with soil polygons
+#' @param pol_saturated tibble with saturated soil polygons
 #' @param pol_structure tibble with structure polygons
 #' @param surf_soil tibble with soil surfaces
 #' @param surf_water tibble with water tables
@@ -327,6 +329,7 @@ ggplot_add_surface <- function(
 #' @examples
 #' #input
 #' pol_soil = data.frame(x = c(0, 0, 2, 2), y = c(0, 1, 1.1, 0), group = 0)
+#' pol_saturated = data.frame(x = c(0, 0, 1, 1), y = c(0, 0.5, 0.5, 0))
 #' pol_water = data.frame(x = c(0, 0, 2, 2), y = c(1, 1.5, 1.2, 1))
 #' pol_structure = data.frame(x = c(0.5, 1, 1), y = c(0.5, 0.5, 0.75))
 #' surf_soil = data.frame(x = c(0, 2), y = c(1, 1.1))
@@ -334,8 +337,9 @@ ggplot_add_surface <- function(
 #'
 #' #plot
 #' ggplot_geometry(
-#'   pol_soil = pol_soil,
 #'   pol_water = pol_water,
+#'   pol_soil = pol_soil,
+#'   pol_saturated = pol_saturated,
 #'   pol_structure = pol_structure,
 #'   surf_soil = surf_soil,
 #'   surf_water = surf_water
@@ -343,8 +347,9 @@ ggplot_add_surface <- function(
 #' @export
 
 ggplot_geometry <- function(
-  pol_soil = NULL,
   pol_water = NULL,
+  pol_soil = NULL,
+  pol_saturated = NULL,
   pol_structure = NULL,
   surf_soil = NULL,
   surf_water = NULL,
@@ -355,16 +360,20 @@ ggplot_geometry <- function(
   ylab = "y [m]"
 ){
   #get plot limits
-  xlim <- round_limits(
-    c(pol_soil$x, pol_water$x, pol_structure$x),
-    lower = xlim[1],
-    upper = xlim[2]
-  )
-  ylim <- round_limits(
-    c(pol_soil$y, pol_water$y, pol_structure$y),
-    lower = ylim[1],
-    upper = ylim[2]
-  )
+  if (length(unique(c(pol_soil$x, pol_saturated$x, pol_water$x, pol_structure$x))) > 1) {
+    xlim <- round_limits(
+      c(pol_soil$x, pol_saturated$x, pol_water$x, pol_structure$x),
+      lower = xlim[1],
+      upper = xlim[2]
+    )
+  }
+  if (length(unique(c(pol_soil$y, pol_saturated$y, pol_water$y, pol_structure$y))) > 1) {
+    ylim <- round_limits(
+      c(pol_soil$y, pol_saturated$y, pol_water$y, pol_structure$y),
+      lower = ylim[1],
+      upper = ylim[2]
+    )
+  }
   #initiate plot
   plt <- ggplot2::ggplot() +
     soilmech::theme_soilmech() +
@@ -382,9 +391,9 @@ ggplot_geometry <- function(
       axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       axis.title.x = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_blank(),
-      panel.grid.minor = ggplot2::element_blank()
+      axis.title.y = ggplot2::element_blank()
+      #panel.grid.major = ggplot2::element_blank(),
+      #panel.grid.minor = ggplot2::element_blank()
     )
   }
   #add water polygons
@@ -394,6 +403,10 @@ ggplot_geometry <- function(
   #add soil polygons
   if (!is.null(pol_soil)) {
     plt <- ggplot_add_polygon(plt, pol_soil, type = "soil")
+  }
+  #add saturated soil polygons
+  if (!is.null(pol_soil)) {
+    plt <- ggplot_add_polygon(plt, pol_saturated, type = "saturated")
   }
   #add structure polygons
   if (!is.null(pol_structure)) {

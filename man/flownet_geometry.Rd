@@ -11,11 +11,10 @@ flownet_geometry(
   iy = c(4, 3, 2, 1, 1, 1, 2),
   kx = 1e-06,
   ky = 1e-06,
-  bc_id = c(2, 7),
+  bc_id = c(1, 7),
   bc_edge = c(2, 2),
   bc_type = c("h", "h"),
   bc_value = c(17.5, 15),
-  dry = c(TRUE, rep(FALSE, 6)),
   grid_size = 0.25,
   node_min = 3
 )
@@ -49,10 +48,6 @@ the domain)}
 `bc_type == "h"`, it defines the known hydraulic head on the boundary.
 If `bc_type == "q"`, it defines the fixed discharge into the domain on
 this boundary.}
-
-\item{dry}{if `TRUE`, the soil domain is dry (above the water table) and
-will not be included in the calculations (but may be plotted). Array
-size n}
 
 \item{grid_size}{the requested grid size. Actual sizes may be slightly
 larger to ensure a regular number of nodes fits in each domain. Thus
