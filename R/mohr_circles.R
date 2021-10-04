@@ -305,6 +305,8 @@ ggplot_stresselement <- function(
 #' @param color_lines color of lines crossing midpoint of circle
 #' @param effective_stress if `TRUE`, effective stress label is plotted on the
 #'   x-axis. if `FALSE`, total stress
+#' @param xlim,ylim user defined min and max x and y axis limits. If not defined,
+#'   the are automatically chosen
 #' @importFrom magrittr `%>%`
 #' @return ggplot object
 #' @examples
@@ -323,7 +325,9 @@ ggplot_mohrcircle <- function(
   n_circle = 181,
   color_circle = "black",
   color_lines = "grey50",
-  effective_stress = FALSE
+  effective_stress = FALSE,
+  xlim = c(0, NA),
+  ylim = c(NA, NA)
 ){
   #stress invariants
   p <- 0.5*(sigx + sigz)
@@ -455,8 +459,8 @@ ggplot_mohrcircle <- function(
       vjust = as.double(0 >= tau)
     ) +
     ggplot2::coord_fixed(
-      xlim = round_limits(p + q, lower = 0), #c(0, round_limits(p + q)),
-      ylim = round_limits(c(-1.2*q, 1.2*q)),  #c(-1, 1)*round_limits(1.2*q),
+      xlim = round_limits(p + q, lower = xlim[1], upper = xlim[2]),
+      ylim = round_limits(c(-1.2*q, 1.2*q), lower = ylim[1], upper = ylim[2]),
       ratio = 1,
       expand = FALSE
     ) +

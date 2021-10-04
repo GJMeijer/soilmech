@@ -17,7 +17,12 @@ ggplot_stresselement(
   fill_soil = "#d3bc5f",
   color_soil = "#65571d",
   coordinate_system = TRUE,
-  coordinate_arrow_length = 0.5
+  coordinate_arrow_length = 0.5,
+  stress_label = TRUE,
+  stress_unit = "kPa",
+  stress_label_size = 3,
+  stress_nround = 1,
+  effective_stress = FALSE
 )
 }
 \arguments{
@@ -48,6 +53,18 @@ used}
 
 \item{coordinate_arrow_length}{length or coordinate system arrows. Defined
 as fraction of `arrow_length`}
+
+\item{stress_label}{if `TRUE`, plot magnitude of (rotated) stresses in top
+right-hand corner}
+
+\item{stress_unit}{unit for stresses, e.g. `stress_unit = "kPa"`}
+
+\item{stress_label_size}{size of stress labels}
+
+\item{stress_nround}{number of decimals in stress labels}
+
+\item{effective_stress}{if `TRUE`, stresses are assumed effective and
+'primes' are added to the stress labels to indicate so}
 }
 \value{
 ggplot object

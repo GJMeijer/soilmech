@@ -16,7 +16,9 @@ ggplot_mohrcircle(
   n_circle = 181,
   color_circle = "black",
   color_lines = "grey50",
-  effective_stress = FALSE
+  effective_stress = FALSE,
+  xlim = c(0, NA),
+  ylim = c(NA, NA)
 )
 }
 \arguments{
@@ -44,6 +46,9 @@ ggplot_mohrcircle(
 
 \item{effective_stress}{if `TRUE`, effective stress label is plotted on the
 x-axis. if `FALSE`, total stress}
+
+\item{xlim, ylim}{user defined min and max x and y axis limits. If not defined,
+the are automatically chosen}
 }
 \value{
 ggplot object

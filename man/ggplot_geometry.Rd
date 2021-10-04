@@ -15,7 +15,7 @@ ggplot_geometry(
   ylim = c(NA, NA),
   axes = TRUE,
   xlab = "x [m]",
-  ylab = "y [m]"
+  ylab = "z [m]"
 )
 }
 \arguments{
