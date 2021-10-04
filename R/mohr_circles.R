@@ -271,7 +271,7 @@ ggplot_stresselement <- function(
       dlab <- tibble::tibble(label = c(
         paste0("sigma[z]==", round(df$sigz2, stress_nround), "~", stress_unit),
         paste0("sigma[x]==", round(df$sigx2, stress_nround), "~", stress_unit),
-        paste0("tau==", round(df$tau2, stress_nround), "~", stress_unit)
+        paste0("tau[xz]==", round(df$tau2, stress_nround), "~", stress_unit)
       ))
     }
     #positions
