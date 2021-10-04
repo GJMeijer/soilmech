@@ -63,6 +63,13 @@ rotate_stresses <- function(sigx, sigz, tau, theta) {
 #'   used
 #' @param coordinate_arrow_length length or coordinate system arrows. Defined
 #'   as fraction of `arrow_length`
+#' @param stress_label if `TRUE`, plot magnitude of (rotated) stresses in top
+#'   right-hand corner
+#' @param stress_unit unit for stresses, e.g. `stress_unit = "kPa"`
+#' @param stress_label_size size of stress labels
+#' @param stress_nround number of decimals in stress labels
+#' @param effective_stress if `TRUE`, stresses are assumed effective and
+#'   'primes' are added to the stress labels to indicate so
 #' @importFrom magrittr `%>%`
 #' @importFrom rlang .data
 #' @return ggplot object
@@ -83,7 +90,12 @@ ggplot_stresselement <- function(
   fill_soil = "#d3bc5f",
   color_soil = "#65571d",
   coordinate_system = TRUE,
-  coordinate_arrow_length = 0.5
+  coordinate_arrow_length = 0.5,
+  stress_label = TRUE,
+  stress_unit = "kPa",
+  stress_label_size = 3,
+  stress_nround = 1,
+  effective_stress = FALSE
 ){
   #stress invariants
   p <- 0.5*(sigx + sigz)
@@ -245,6 +257,35 @@ ggplot_stresselement <- function(
         hjust = 0.5,
         vjust = 1
       )
+  }
+  #plot magnitude of stresses in top right-hand corner
+  if (stress_label == TRUE) {
+    #labels
+    if (effective_stress == TRUE) {
+      dlab <- tibble::tibble(label = c(
+        paste0("sigma*minute[z]==", round(df$sigz2, stress_nround), "~", stress_unit),
+        paste0("sigma*minute[x]==", round(df$sigx2, stress_nround), "~", stress_unit),
+        paste0("tau*minute[z]==", round(df$tau2, stress_nround), "~", stress_unit)
+      ))
+    } else {
+      dlab <- tibble::tibble(label = c(
+        paste0("sigma[z]==", round(df$sigz2, stress_nround), "~", stress_unit),
+        paste0("sigma[x]==", round(df$sigx2, stress_nround), "~", stress_unit),
+        paste0("tau==", round(df$tau2, stress_nround), "~", stress_unit)
+      ))
+    }
+    #positions
+    dlab$x <- 0.99*(0.5 + 2*arrow_offset + arrow_length)
+    dlab$y <- c(0.99, 0.84, 0.69)*(0.5 + 2*arrow_offset + arrow_length)
+    #add to plot
+    plt <- plt + ggplot2::geom_text(
+      data = dlab,
+      ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
+      hjust = 1,
+      vjust = 1,
+      size = stress_label_size,
+      parse = TRUE
+    )
   }
   #return
   return(plt)

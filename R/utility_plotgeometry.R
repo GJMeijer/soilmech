@@ -277,7 +277,7 @@ ggplot_add_surface <- function(
         scale = sett$scale_marker*diff(ylim)
       )
     if (type == "soil") {
-      for (i in nrow(dfm)) {
+      for (i in 1:nrow(dfm)) {
         plt <- ggplot_add_soilmarker(
           plt,
           xc = dfm$xc[i],
@@ -289,7 +289,7 @@ ggplot_add_surface <- function(
         )
       }
     } else if (type == "water") {
-      for (i in nrow(dfm)) {
+      for (i in 1:nrow(dfm)) {
         plt <- ggplot_add_watermarker(
           plt,
           xc = dfm$xc[i],
@@ -357,7 +357,7 @@ ggplot_geometry <- function(
   ylim = c(NA, NA),
   axes = TRUE,
   xlab = "x [m]",
-  ylab = "y [m]"
+  ylab = "z [m]"
 ){
   #get plot limits
   if (length(unique(c(pol_soil$x, pol_saturated$x, pol_water$x, pol_structure$x))) > 1) {
@@ -405,7 +405,7 @@ ggplot_geometry <- function(
     plt <- ggplot_add_polygon(plt, pol_soil, type = "soil")
   }
   #add saturated soil polygons
-  if (!is.null(pol_soil)) {
+  if (!is.null(pol_saturated)) {
     plt <- ggplot_add_polygon(plt, pol_saturated, type = "saturated")
   }
   #add structure polygons
@@ -422,4 +422,128 @@ ggplot_geometry <- function(
   }
   #return
   plt
+}
+
+
+#' Add arrows to ggplot
+#'
+#' @description
+#' Add some arrow objects and annotation to an existing ggplot
+#'
+#' @param plt existing ggplot object
+#' @param x,y x,y positions of arrow tips
+#' @param theta orientation of arrows (in rad)
+#' @param scale arrow length, in fraction of y-range
+#' @param length arrow length in x,y coordinate system. If specified,
+#'   overrides `scale` setting
+#' @param label labels for each arrow (string). Labels are plotted near the
+#'   tail of each arrow
+#' @param label_size label text size
+#' @param label_parse if `TRUE`, parse the label input
+#' @param label_offset small offset to create distance between arrow tails.
+#'   Expressed in fraction of y-range
+#' @param linewidth arrow line width
+#' @param colour arrow colour
+#' @param scale_arrow length of arrow head, as fraction of arrow length
+#' @param scale_arrow_max maximum arrow head size, as fraction of y-range
+#' @examples
+#' #generate a plot
+#' plt <- ggplot2::ggplot() +
+#'   ggplot2::geom_rect(ggplot2::aes(xmin = 0, xmax = 2, ymin = 0, ymax = 2), fill = "yellow") +
+#'   ggplot2::coord_fixed(ratio = 1)
+#'
+#' #arrow
+#' x = c(1, 1, 1, 1)
+#' y = c(1, 1, 1, 1)
+#' theta = c(-pi/2, 0, pi/2, pi)
+#' label = "test*theta"
+#' ggplot_add_arrow(plt, x, y, theta = theta, label = label, label_parse = TRUE)
+#' @export
+
+
+ggplot_add_arrow <- function(
+  plt,
+  x,
+  y,
+  theta = -pi/2,
+  scale = 0.1,
+  length = NULL,
+  label = NULL,
+  label_size = 3.5,
+  label_parse = FALSE,
+  label_offset = 0.02,
+  linewidth = 0.5,
+  colour = "black",
+  scale_arrow = 0.3,
+  scale_arrow_max = 0.1
+) {
+  #get current plot y-axis limits
+  ylim <- ggplot2::ggplot_build(plt)$layout$panel_scales_y[[1]]$range$range
+  #if arrow length not defined, determine from scale
+  if (is.null(length)) {
+    if (is.double(scale)) {
+      length <- scale*diff(ylim)
+    } else {
+      length <- 1
+    }
+  }
+  scale <- length/diff(ylim)
+  #create dataframe with begin and end positions
+  df <- tibble::tibble(
+    xend = x,
+    yend = y,
+    theta = theta %% (2*pi),
+    x = xend - length*cos(.data$theta),
+    y = yend - length*sin(.data$theta)
+  )
+  #add to ggplot
+  plt <- plt + ggplot2::geom_segment(
+    data = df,
+    ggplot2::aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend),
+    color = colour,
+    size = linewidth,
+    arrow = ggplot2::arrow(length = ggplot2::unit(min(scale_arrow_max, scale*scale_arrow), "npc"))
+  )
+  #add labels
+  if (!is.null(label)) {
+    df <- df %>% dplyr::mutate(
+      label = label,
+      xlabel = x,
+      ylabel = y,
+      hjust = 0.5,
+      vjust = 0.5
+    )
+    #bottom
+    i2 <- (df$theta >= pi/4) & (df$theta < 3*pi/4)
+    df$vjust[i2] <- 1
+    df$ylabel[i2] < df$y[i2] - label_offset*diff(ylim)
+    #right
+    i1 <- (df$theta >= 3*pi/4) & (df$theta < 5*pi/4)
+    df$hjust[i1] <- 0
+    df$xlabel[i1] <- df$x[i1] + label_offset*diff(ylim)
+    #top
+    i4 <- (df$theta >= 5*pi/4) & (df$theta < 7*pi/4)
+    df$vjust[i4] <- 0
+    df$ylabel[i4] <- df$y[i4] + label_offset*diff(ylim)
+    #right
+    i3 <- as.logical(1 - i2 - i1 - i4)
+    df$hjust[i3] <- 1
+    df$xlabel[i3] <- df$x[i3] - label_offset*diff(ylim)
+    #add text
+    plt <- plt + ggplot2::geom_text(
+      data = df,
+      ggplot2::aes(
+        x = .data$xlabel,
+        y = .data$ylabel,
+        label = .data$label,
+        hjust = .data$hjust,
+        vjust = .data$vjust
+      ),
+      color = colour,
+      size = label_size,
+      parse = label_parse
+    )
+  }
+  #return
+  return(plt)
 }

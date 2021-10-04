@@ -464,21 +464,24 @@ ggplot_add_flownet <- function(
     color = NA
   )
   #add flow and equipotential lines using contour lines
-  plt <- plt +
-    ggplot2::geom_contour(
+  if (is.character(colour_equipotentialline) == TRUE) {
+    plt <- plt + ggplot2::geom_contour(
       data = dp,
       ggplot2::aes(x = .data$x, y = .data$y, z = .data$h),
       breaks = Nd_levels,
       color = colour_equipotentialline,
       size = linewidth
-    ) +
-    ggplot2::geom_contour(
+    )
+  }
+  if (is.character(colour_flowline) == TRUE) {
+    plt <- plt + ggplot2::geom_contour(
       data = dp,
       ggplot2::aes(x = .data$x, y = .data$y, z = .data$psi),
       breaks = Nf_levels,
       color = colour_flowline,
       size = linewidth
     )
+  }
   #return
   return(plt)
 }
