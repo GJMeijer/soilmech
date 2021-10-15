@@ -7,19 +7,19 @@
 nodes_total(nx, ny, real_only = FALSE, ...)
 }
 \arguments{
-\item{nx}{number of real nodes in x and y-direction}
+\item{nx}{number of real nodes in x and y directions}
 
-\item{ny}{number of real nodes in x and y-direction}
+\item{ny}{number of real nodes in x and y directions}
 
-\item{real_only}{if `TRUE`, only real nodes are numbered. if `FALSE`, all
-ghost nodes are included in the numbering as well}
+\item{real_only}{if `TRUE`, only real nodes are numbered and ghost nodes
+are ignored in numbering}
 
-\item{...}{additional optional arguments}
+\item{...}{additional arguments to pass}
 }
 \value{
 number of nodes (scalar)
 }
 \description{
-Determine the total number of nodes on a grid of nodes, including any
-ghost nodes outside all four sides of the grid
+Determine the total number of nodes on a grid of nodes. Ghost nodes
+are or are not included based on `real_only` setting.
 }

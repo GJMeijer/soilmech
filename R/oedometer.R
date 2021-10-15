@@ -48,10 +48,10 @@
 ggplot_casagrande_preconsolidation <- function(
   sigma_v = c(5, 10, 20, 50, 100, 200, 500, 1000, 2000),
   e = c(0.94, 0.93, 0.92, 0.90, 0.88, 0.85, 0.80, 0.75, 0.71),
-  xlim = c(1, NA),
+  xlim = c(4, NA),
   ylim = c(NA, NA),
   palette = "Set1",
-  label_line = c("A", "B", "C", "D", "E", 'sigma*minute[v*","*0]'),
+  label_line = c("1", "2", "3", "4", "5", 'sigma*minute[v*","*0]'),
   stages = seq(6)
 ) {
   #colors
@@ -66,11 +66,11 @@ ggplot_casagrande_preconsolidation <- function(
     upper = list(e0 = Inf, Cs = Inf, Cc = Inf, sigma_vc = max(sigma_v), b = Inf)
   )
   #assign coefficients
-  e0 <- as.double(coef(ft)[1])
-  Cs <- as.double(coef(ft)[2])
-  Cc <- as.double(coef(ft)[3])
-  sigma_vc <- as.double(coef(ft)[4])
-  b <- as.double(coef(ft)[5])
+  e0 <- as.double(stats::coef(ft)[1])
+  Cs <- as.double(stats::coef(ft)[2])
+  Cc <- as.double(stats::coef(ft)[3])
+  sigma_vc <- as.double(stats::coef(ft)[4])
+  b <- as.double(stats::coef(ft)[5])
   #generate fitting line
   dfit <- tibble::tibble(sigma_v = 10^seq(log10(min(sigma_v)), log10(max(sigma_v)), l = 101))
   dfit$e <- e0 - Cs*log10(dfit$sigma_v) - 0.5*(b*log(cosh(log10(dfit$sigma_v/sigma_vc)/b)) + log10(dfit$sigma_v))*(Cc - Cs)

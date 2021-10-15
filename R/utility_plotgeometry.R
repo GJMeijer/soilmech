@@ -493,8 +493,8 @@ ggplot_add_arrow <- function(
     xend = x,
     yend = y,
     theta = theta %% (2*pi),
-    x = xend - length*cos(.data$theta),
-    y = yend - length*sin(.data$theta)
+    x = .data$xend - length*cos(.data$theta),
+    y = .data$yend - length*sin(.data$theta)
   )
   #add to ggplot
   plt <- plt + ggplot2::geom_segment(

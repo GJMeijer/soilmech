@@ -23,5 +23,5 @@ array of indices for all real nodes (non-ghost nodes)
 }
 \description{
 Get an array of the indices of all real nodes in a rectangular grid. For
-node numbering, see function `findiff_sparse_entries()`
+node numbering, see function `findiff_sparse_elements()`
 }

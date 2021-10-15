@@ -2,43 +2,34 @@
 % Please edit documentation in R/finite_differences.R
 \name{index_vector2grid}
 \alias{index_vector2grid}
-\title{Get grid index of nodes in specific direction}
+\title{Convert node position to grid x-y position}
 \usage{
-index_vector2grid(i, nx, ny, direction = "x", i0 = 0, real_only = FALSE, ...)
+index_vector2grid(i, nx, ny, i0 = 0, real_only = FALSE, ...)
 }
 \arguments{
-\item{i}{indices of nodes}
+\item{i}{array with node indices}
 
-\item{nx, ny}{number of real nodes in x and y-direction}
+\item{nx, ny}{number of real nodes in x and y directions}
 
-\item{direction}{direction of index to find. Should be `x` or `y`}
+\item{i0}{node index offset}
 
-\item{i0}{node starting number (index of first node minus 1)}
+\item{real_only}{if `TRUE`, only real nodes are numbered and ghost nodes
+are ignored in numbering}
 
-\item{real_only}{if `TRUE`, only include real nodes in numbering,}
-
-\item{...}{additional named arguments to pass to function}
+\item{...}{additional arguments to pass}
 }
 \value{
-vector with domain indices in x or y-direction
+a list with two fields: `ix` and `iy` with indices in x and y
+  directions
 }
 \description{
-Gets the x or y position index from a list of node indices. For the
-node numbering system, see documentation of function
-`findiff_sparse_entries()`
+Function takes a vector of node indices (numbered row-wise) and
+returns a list of their x and y indices.
 }
 \examples{
-#number of real nodes in grid
+#convert to grid positions
 nx <- 4
 ny <- 3
-
-#real + ghost nodes
-i <- seq(nodes_total(nx, ny, real_only = FALSE))
-index_vector2grid(i, nx, ny, direction = "x", real_only = FALSE)
-index_vector2grid(i, nx, ny, direction = "y", real_only = FALSE)
-
-#real nodes only
-i <- seq(nodes_total(nx, ny, real_only = TRUE))
-index_vector2grid(i, nx, ny, direction = "x", real_only = TRUE)
-index_vector2grid(i, nx, ny, direction = "y", real_only = TRUE)
+i <- seq(1, (nx + 2)*(ny + 2) - 4)
+index_vector2grid(i, nx, ny)
 }

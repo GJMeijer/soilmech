@@ -2,35 +2,43 @@
 % Please edit documentation in R/finite_differences.R
 \name{index_grid2vector}
 \alias{index_grid2vector}
-\title{Get array index of node based on x and y-indices}
+\title{Convert node grid positions to indices}
 \usage{
-index_grid2vector(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = FALSE, ...)
+index_grid2vector(ix, iy, nx, ny, i0 = 0, real_only = FALSE, ...)
 }
 \arguments{
-\item{nx, ny}{number of real nodes in x and y-direction}
+\item{ix, iy}{arrays with index of position in x and y directions}
 
-\item{ix, iy}{scalar of x and y-index. If one of these is left empty
-(`NULL`), all array indices in that row or column are returned}
+\item{nx}{number of real nodes in x and y directions}
 
-\item{i0}{offset for the index of the first node}
+\item{ny}{number of real nodes in x and y directions}
 
-\item{real_only}{if `TRUE`, the grid is assumed to contain only real nodes,
-so there are `nx*ny` nodes. If `FALSE`, the grid is assumed to contain
-ghost nodes on the sides of each of the four edges of the grid, resulting
-in `nx*ny + 2*nx + 2*ny` nodes. These are numbered in row-wise order,
-starting with the left-most ghost node underneath the lower edge}
+\item{i0}{node index offset}
 
-\item{...}{extra arguments}
+\item{real_only}{if `TRUE`, only real nodes are numbered and ghost nodes
+are ignored in numbering}
+
+\item{...}{additional arguments to pass}
 }
 \value{
-array of indices
+array with node index for each node
 }
 \description{
-Get the indices in the 1-D node array for rectangle with regularly spaced
-nodes, based on x and y-position indices. For the ndde numbering system
-used, see documentation of function `findiff_sparse_entries()`
+Function takes a vectors of x and y node indices and returns the index
+(numbered row-wise)
 }
 \examples{
-index_grid2vector(4, 3, ix = 2, real_only = TRUE)
-index_grid2vector(4, 3, ix = 2, real_only = FALSE)
+#define grid
+nx <- 4
+ny <- 3
+
+#including ghost nodes
+i <- seq(nodes_total(nx, ny))
+ixy <- index_vector2grid(i, nx, ny)
+index_grid2vector(ixy$ix, ixy$iy, nx, ny)
+
+#excluding ghost nodes
+i <- seq(nodes_total(nx, ny, real_only = TRUE))
+ixy <- index_vector2grid(i, nx, ny, real_only = TRUE)
+index_grid2vector(ixy$ix, ixy$iy, nx, ny, real_only = TRUE)
 }

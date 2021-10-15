@@ -5,29 +5,19 @@
 #' first order approximation of values for all real nodes in a regularly
 #' spaced, rectangular grid in either the x or y direction.
 #'
-#' The function assumes a regular, rectangular grid where nodes are numbered
-#' row-first. The grid may or may not contain ghost nodes, depending on the
-#' input settings.
+#' The function assumes a regular, square grid where nodes are numbered
+#' row-first. The grid contains ghost nodes, and has a size 1*1.
 #'
-#' If `real_only = TRUE`, the grid contains only 'real' nodes. For a 4*3 grid,
-#' these are numbered:
-#'
-#' |    | ix=1 | ix=2 | ix=3 | ix=4 |
-#' | :---: | :---: | :---: | :---: | :---: |
-#' | iy=3 | 9  | 10 | 11 | 12 |
-#' | iy=2 | 5  | 6  | 7  | 8  |
-#' | iy=1 | 1  | 2  | 3  | 4  |
-#'
-#' If `real_only = FALSE`, the grid also contains 'ghost' nodes on the side
-#' of all edges. For a 4*3 grid, the numbering is:
+#' The grid contains 'ghost' nodes on the side of all edges. For a 4*3 grid,
+#' the numbering is ('g' indicates a ghost node):
 #'
 #' |    | ix=0 | ix=1 | ix=2 | ix=3 | ix=4 | ix=5 |
 #' | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-#' | iy=4 |    | 23 | 24 | 25 | 26 |    |
-#' | iy=3 | 17 | 18 | 19 | 20 | 21 | 22 |
-#' | iy=2 | 11 | 12 | 13 | 14 | 15 | 16 |
-#' | iy=1 | 5  | 6  | 7  | 8  | 9  | 10 |
-#' | iy=0 |    | 1  | 2  | 3  | 4  |    |
+#' | iy=4 |    | 23 (g) | 24 (g) | 25 (g) | 26 (g) |    |
+#' | iy=3 | 17 (g) | 18 | 19 | 20 | 21 | 22 (g) |
+#' | iy=2 | 11 (g) | 12 | 13 | 14 | 15 | 16 (g) |
+#' | iy=1 | 5 (g) | 6  | 7  | 8  | 9  | 10 (g) |
+#' | iy=0 |    | 1 (g) | 2 (g) | 3 (g)  | 4 (g)  |    |
 #'
 #' The finite difference approximation is of the second order (central
 #' differences). When only real nodes are used and the node lies on an edge,
@@ -39,166 +29,232 @@
 #'   at least 3 (real or ghost) nodes in the direction of differentiation,
 #'   or 4 in case 2nd order differentiation is requested with
 #'   `real_only == TRUE`
-#' @param order the order of differentiation. `order = 1` for first-order
-#'   differentiation, and `order = 2` for second order differentiation
-#' @param h step size
-#' @param direction direction of finite differences. `direction` should be
-#'   equal to either `x` or `y`
-#' @param real_only if `TRUE`, the grid is assumed to contain only real nodes,
-#'   so there are `nx*ny` nodes. If `FALSE`, the grid is assumed to contain
-#'   ghost nodes on the sides of each of the four edges of the grid, resulting
-#'   in `nx*ny + 2*nx + 2*ny` nodes. These are numbered in row-wise order,
-#'   starting with the left-most ghost node underneath the lower edge
-#' @param i0_row,i0_col optional index offset for rows and columns
+#' @param direction direction of differentiation
+#'   - `direction = "x"`: 1st order in x-direction (d/dx)
+#'   - `direction = "y"`: 1st order in y-direction (d/dy)
+#'   - `direction = "xx"`: 2nd order in x-direction (d^2/dx^2)
+#'   - `direction = "xy"`: 2nd order in y-direction (d^2/dy^2)
+#'   - `direction = "xy"`: 1st order in x and y-direction (d^2/dxdy)
+#' @param i0 optional index offset for node offset
 #' @param multiplier optional multipliers for all values in the finite
 #'   difference matrix to differentiate real nodes
 #' @param ... potential extra arguments
 #' @return a tibble with node indices for row (`row`), column (`col`) and
 #'   value (`val`) columns of non-zero entries in the matrix
 #' @examples
-#' findiff_sparse_entries(5, 4, order = 1, direction = "x", real_only = TRUE)
-#' findiff_sparse_entries(5, 4, order = 1, direction = "y", real_only = FALSE)
-#' findiff_sparse_entries(5, 4, order = 2, direction = "x", real_only = TRUE)
-#' findiff_sparse_entries(5, 4, order = 2, direction = "y", real_only = FALSE)
+#' nx <- 4
+#' ny <- 3
+#' findiff_sparse_elements(nx, ny, "x")
+#' findiff_sparse_elements(nx, ny, "yy")
+#' findiff_sparse_elements(nx, ny, "xy")
 #' @export
 
-findiff_sparse_entries <- function(
+findiff_sparse_elements <- function(
   nx,
   ny,
-  order = 1,
-  h = 1,
-  direction = "x",
-  real_only = FALSE,
-  i0_row = 0,
-  i0_col = 0,
+  direction,
+  i0 = 0,
   multiplier = 1,
   ...
 ){
-  if (order == 1) {
-    ## FIRST ORDER DIFFERENTATION
-    if (direction == "x") {
-      #x-direction
-      if (real_only == TRUE) {
-        #elements for the first row
-        row_first <- c(rep(1, 3), rep(seq(2, nx - 1), each = 2), rep(nx, 3))
-        col_first <- c(1, 2, 3, rep(seq(2, nx - 1), each = 2) + rep(c(-1, 1), (nx - 2)), nx - c(2, 1, 0))
-        val_first <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (nx - 2)), 0.5, -2, 1.5)/h
-        #elements for all rows
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, ny) + rep((seq(ny) - 1)*nx, each = length(row_first)),
-          col = i0_col + rep(col_first, ny) + rep((seq(ny) - 1)*nx, each = length(col_first)),
-          val = multiplier*rep(val_first, ny)
-        ))
-      } else {
-        #elements for the first row
-        row_first <- (nx + 1) + rep(seq(nx), each = 2)
-        col_first <- row_first + rep(c(-1, 1), nx)
-        val_first <- rep(c(-0.5, 0.5), nx)/h
-        #elements for all rows
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, ny) + rep((seq(ny) - 1)*(nx + 2), each = length(row_first)),
-          col = i0_col + rep(col_first, ny) + rep((seq(ny) - 1)*(nx + 2), each = length(col_first)),
-          val = multiplier*rep(val_first, ny)
-        ))
-      }
-    } else if (direction == "y") {
-      #y-direction
-      if (real_only == TRUE) {
-        #elements for the first column
-        row_first <- 1 + (c(rep(1, 3), rep(seq(2, ny - 1), each = 2), rep(ny, 3)) - 1)*nx
-        col_first <- 1 + (c(1, 2, 3, rep(seq(2, ny - 1), each = 2) + rep(c(-1, 1), (ny - 2)), ny - c(2, 1, 0)) - 1)*nx
-        val_first <- c(-1.5, 2, -0.5, rep(c(-0.5, 0.5), (ny - 2)), 0.5, -2, 1.5)/h
-        #elements for all columns
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          col = i0_col + rep(col_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          val = multiplier*rep(val_first, nx)
-        ))
-      } else {
-        #elements for the first column
-        row_first <- nx + 2 + (rep(seq(ny), each = 2) - 1)*(nx + 2)
-        col_first <- row_first + c(-(nx + 1), (nx + 2), rep(c(-1, 1), ny - 2)*(nx + 2), -(nx + 2), (nx + 1))
-        val_first <- rep(c(-0.5, 0.5), ny)/h
-        #elements for all columns
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          col = i0_col + rep(col_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          val = multiplier*rep(val_first, nx)
-        ))
-      }
-    }
-  } else if (order == 2) {
-    ## SECOND ORDER DIFFERENTATION
-    if (direction == "x") {
-      #x-direction
-      if (real_only == TRUE) {
-        # CHANGE #elements for the first row
-        row_first <- c(rep(1, 4), rep(seq(2, nx - 1), each = 3), rep(nx, 4))
-        col_first <- c(seq(4), rep(seq(2, nx - 1), each = 3) + rep(c(-1, 0, 1), (nx - 2)), nx - seq(3, 0))
-        val_first <- c(2, -5, 4, -1, rep(c(1, -2, 1), (nx - 2)), -1, 4, -5, 2)/h^2
-        #elements for all rows
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, ny) + rep((seq(ny) - 1)*nx, each = length(row_first)),
-          col = i0_col + rep(col_first, ny) + rep((seq(ny) - 1)*nx, each = length(col_first)),
-          val = multiplier*rep(val_first, ny)
-        ))
-      } else {
-        #elements for the first row
-        row_first <- (nx + 1) + rep(seq(nx), each = 3)
-        col_first <- row_first + rep(c(-1, 0, 1), nx)
-        val_first <- rep(c(1, -2, 1), nx)/h^2
-        #elements for all rows
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, ny) + rep((seq(ny) - 1)*(nx + 2), each = length(row_first)),
-          col = i0_col + rep(col_first, ny) + rep((seq(ny) - 1)*(nx + 2), each = length(col_first)),
-          val = multiplier*rep(val_first, ny)
-        ))
-      }
-    } else if (direction == "y") {
-      #y-direction
-      if (real_only == TRUE) {
-        #elements for the first column
-        row_first <- 1 + (c(rep(1, 4), rep(seq(2, ny - 1), each = 3), rep(ny, 4)) - 1)*nx
-        col_first <- 1 + (c(seq(4), rep(seq(2, ny - 1), each = 3) + rep(c(-1, 0, 1), (ny - 2)), ny - seq(3, 0)) - 1)*nx
-        val_first <- c(2, -5, 4, -1, rep(c(1, -2, 1), (ny - 2)), -1, 4, -5, 2)/h^2
-        #elements for all columns
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          col = i0_col + rep(col_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          val = multiplier*rep(val_first, nx)
-        ))
-      } else {
-        #elements for the first column
-        row_first <- nx + 2 + (rep(seq(ny), each = 3) - 1)*(nx + 2)
-        col_first <- row_first + c(-(nx + 1), 0, (nx + 2), rep(c(-1, 0, 1), ny - 2)*(nx + 2), -(nx + 2), 0, (nx + 1))
-        val_first <- rep(c(1, -2, 1), ny)/h^2
-        #elements for all columns
-        return(tibble::tibble(
-          row = i0_row + rep(row_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          col = i0_col + rep(col_first, nx) + rep(seq(0, nx - 1), each = length(row_first)),
-          val = multiplier*rep(val_first, nx)
-        ))
-      }
-    }
+  #enforce at least three nodes in each direction
+  nx <- max(3, nx)
+  ny <- max(3, ny)
+  #step sizes
+  hx <- 1/(nx - 1)
+  hy <- 1/(ny - 1)
+  #indices of real nodes
+  i <- index_real(nx, ny, i0 = i0)
+  n <- length(i)
+  #generate sparse elements of derivative matrix for all real nodes
+  if (direction == "x") {
+    ## d/dx - central differences
+    return(list(
+      row = rep(i, 2),
+      col = c(
+        index_offset(i, nx, ny, dix = -1, i0 = i0),
+        index_offset(i, nx, ny, dix = 1, i0 = i0)
+      ),
+      val = rep(c(-0.5, 0.5)/hx, each = n)*rep(multiplier, 2)
+    ))
+  } else if (direction == "y") {
+    ## d/dy - central differences
+    return(list(
+      row = rep(i, 2),
+      col = c(
+        index_offset(i, nx, ny, diy = -1, i0 = i0),
+        index_offset(i, nx, ny, diy = 1, i0 = i0)
+      ),
+      val = rep(c(-0.5, 0.5)/hy, each = n)*rep(multiplier, 2)
+    ))
+  } else if (direction == "xx") {
+    ## d^2/dx^2 - central differences
+    return(list(
+      row = rep(i, 3),
+      col = c(
+        index_offset(i, nx, ny, dix = -1, i0 = i0),
+        i,
+        index_offset(i, nx, ny, dix = 1, i0 = i0)
+      ),
+      val = rep(c(1, -2, 1)/hx^2, each = n)*rep(multiplier, 3)
+    ))
+  } else if (direction == "yy") {
+    ## d^2/dy^2 - central differences
+    return(list(
+      row = rep(i, 3),
+      col = c(
+        index_offset(i, nx, ny, diy = -1, i0 = i0),
+        i,
+        index_offset(i, nx, ny, diy = 1, i0 = i0)
+      ),
+      val = rep(c(1, -2, 1)/hy^2, each = n)*rep(multiplier, 3)
+    ))
+  } else if ((direction == "xy") | (direction == "yx")) {
+    ## d^2/dxdy - central differences (apart from cornerpoints)
+    #indices of corner points
+    ic00 <- index_grid2vector(1, 1, nx, ny, i0 = i0)
+    ic10 <- index_grid2vector(nx, 1, nx, ny, i0 = i0)
+    ic01 <- index_grid2vector(1, ny, nx, ny, i0 = i0)
+    ic11 <- index_grid2vector(nx, ny, nx, ny, i0 = i0)
+    #indices of real points
+    ic00_real <- 1
+    ic10_real <- nx
+    ic01_real <- 1 + nx*(ny - 1)
+    ic11_real <- nx*ny
+    #entries for non-corner points
+    cfilter <- (i %in% c(ic00, ic10, ic01, ic11))
+    row_nc <- rep(i[!cfilter], 4)
+    col_nc <- c(
+      index_offset(i[!cfilter], nx, ny, dix = -1, diy = -1, i0 = i0),
+      index_offset(i[!cfilter], nx, ny, dix = 1, diy = -1, i0 = i0),
+      index_offset(i[!cfilter], nx, ny, dix = -1, diy = 1, i0 = i0),
+      index_offset(i[!cfilter], nx, ny, dix = 1, diy = 1, i0 = i0)
+    )
+    val_nc = rep(c(1, -1, -1, 1)/(4*hx*hy), each = sum(!cfilter))*rep(multiplier[!cfilter], 4)
+    #entries for cornerpoints
+    row_c00 <- rep(ic00, 5)
+    col_c00 <- index_offset(ic00, nx, ny, dix = c(-1, -1, -1, 1, 1), diy = c(0, 1, 2, -1, 1), i0 = i0)
+    val_c00 <- multiplier[ic00_real]*c(0.75, -1, 0.25, -0.25, 0.25)/(hx*hy)
+    row_c10 <- rep(ic10, 5)
+    col_c10 <- index_offset(ic10, nx, ny, dix = c(1, 1, 1, -1, -1), diy = c(0, 1, 2, -1, 1), i0 = i0)
+    val_c10 <- multiplier[ic10_real]*c(-0.75, 1, -0.25, 0.25, -0.25)/(hx*hy)
+    row_c01 <- rep(ic01, 5)
+    col_c01 <- index_offset(ic01, nx, ny, dix = c(-1, -1, -1, 1, 1), diy = c(-2, -1, 0, -1, 1), i0 = i0)
+    val_c01 <- multiplier[ic01_real]*c(-0.75, 1, -0.25, -0.25, 0.25)/(hx*hy)
+    row_c11 <- rep(ic11, 5)
+    col_c11 <- index_offset(ic11, nx, ny, dix = c(1, 1, 1, -1, -1), diy = c(-2, -1, 0, -1, 1), i0 = i0)
+    val_c11 <- multiplier[ic11_real]*c(0.75, -1, 0.25, 0.25, -0.25)/(hx*hy)
+    #return all entries
+    return(list(
+      row = c(row_c00, row_c10, row_nc, row_c01, row_c11),
+      col = c(col_c00, col_c10, col_nc, col_c01, col_c11),
+      val = c(val_c00, val_c10, val_nc, val_c01, val_c11)
+    ))
   }
 }
 
 
-#' Get indices of all real nodes
+#' Get sparse matrix elements for 1st order differentiation (no ghost nodes)
 #'
 #' @description
-#' Get an array of the indices of all real nodes in a rectangular grid. For
-#' node numbering, see function `findiff_sparse_entries()`
+#' Function generates rows, column and values for sparse matrix to get a
+#' first order approximation of values for all real nodes in a regularly
+#' spaced, rectangular grid in either the x or y direction.
 #'
-#' @inheritParams index_edge
-#' @return array of indices for all real nodes (non-ghost nodes)
+#' The function assumes a regular, square grid where nodes are numbered
+#' row-first. The grid does not contain any ghost nodes. The grid has a
+#' size 1*1.
+#'
+#' For a 4*3 grid, the numbering is:
+#'
+#' |    | ix=1 | ix=2 | ix=3 | ix=4 |
+#' | :---: | :---: | :---: | :---: | :---: |
+#' | iy=3 | 9  | 10 | 11 | 12 |
+#' | iy=2 | 5  | 6  | 7  | 8  |
+#' | iy=1 | 1  | 2  | 3  | 4  |
+#'
+#' The finite difference approximation is of the second order (central
+#' differences). When only real nodes are used and the node lies on an edge,
+#' a second order approximation is used (forwards or backwards, depending
+#' on the position)
+#' @md
+#'
+#' @param nx,ny number of real nodes in x and y-directions. There need to be
+#'   at least 3 (real or ghost) nodes in the direction of differentiation,
+#'   or 4 in case 2nd order differentiation is requested with
+#'   `real_only == TRUE`
+#' @param direction direction of differentiation
+#'   - `direction = "x"`: 1st order in x-direction (d/dx)
+#'   - `direction = "y"`: 1st order in y-direction (d/dy)
+#' @param i0 optional index offset for node offset
+#' @param multiplier optional multipliers for all values in the finite
+#'   difference matrix to differentiate real nodes
+#' @param ... potential extra arguments
+#' @return a tibble with node indices for row (`row`), column (`col`) and
+#'   value (`val`) columns of non-zero entries in the matrix
+#' @examples
+#' findiff_sparse_elements_realonly(9, 5, "y")
 #' @export
 
-index_real <- function(nx, ny, i0 = 0, real_only = FALSE, ...) {
-  if (real_only == FALSE) {
-    return(i0 + rep(seq(nx), ny) + rep(seq(ny), each = nx)*(nx + 2) - 1)
-  } else {
-    return(i0 + seq(nx*ny))
+findiff_sparse_elements_realonly <- function(
+  nx,
+  ny,
+  direction,
+  i0 = 0,
+  multiplier = 1,
+  ...
+){
+  #enforce at least three nodes in each direction
+  nx <- max(3, nx)
+  ny <- max(3, ny)
+  #step sizes
+  hx <- 1/(nx - 1)
+  hy <- 1/(ny - 1)
+  #first derivative in x-direction
+  if (direction == "x") {
+    row_single <- c(
+      rep(1, 3),
+      rep(seq(2, nx - 1), each = 2),
+      rep(nx, 3)
+    )
+    col_single <- c(
+      seq(1, 3),
+      rep(seq(2, nx - 1), each = 2) + rep(c(-1, 1), nx - 2),
+      seq(nx - 2, nx)
+    )
+    val_single <- c(
+      c(-1.5, 2, -0.5),
+      rep(c(-0.5, 0.5), (nx - 2)),
+      c(0.5, -2, 1.5)
+    )/hx
+    return(tibble::tibble(
+      row = i0 + rep(row_single, ny) + rep(nx*(seq(ny) - 1), each = length(row_single)),
+      col = i0 + rep(col_single, ny) + rep(nx*(seq(ny) - 1), each = length(row_single)),
+      val = multiplier*rep(val_single, ny)
+    ))
+  }
+  #first derivative in y-direction
+  if (direction == "y") {
+    row_single <- c(
+      rep(1, 3),
+      rep(1 + seq(1, ny - 2)*nx, each = 2),
+      1 + rep(nx*(ny - 1), 3)
+    )
+    col_single <- c(
+      1 + seq(0, 2)*nx,
+      1 + (rep(seq(1, ny - 2), each = 2) + rep(c(-1, 1), ny - 2))*nx,
+      1 + seq(ny - 3, ny - 1)*nx
+    )
+    val_single <- c(
+      c(-1.5, 2, -0.5),
+      rep(c(-0.5, 0.5), (ny - 2)),
+      c(0.5, -2, 1.5)
+    )/hy
+    return(tibble::tibble(
+      row = i0 + rep(row_single, nx) + rep(seq(0, nx - 1), each = length(row_single)),
+      col = i0 + rep(col_single, nx) + rep(seq(0, nx - 1), each = length(row_single)),
+      val = multiplier*rep(val_single, nx)
+    ))
   }
 }
 
@@ -206,10 +262,10 @@ index_real <- function(nx, ny, i0 = 0, real_only = FALSE, ...) {
 #' Determine total number of nodes
 #'
 #' @description
-#' Determine the total number of nodes on a grid of nodes, including any
-#' ghost nodes outside all four sides of the grid
+#' Determine the total number of nodes on a grid of nodes. Ghost nodes
+#' are or are not included based on `real_only` setting.
 #'
-#' @inheritParams index_edge
+#' @inheritParams index_grid2vector
 #' @return number of nodes (scalar)
 #' @export
 
@@ -222,11 +278,139 @@ nodes_total <- function(nx, ny, real_only = FALSE, ...) {
 }
 
 
+#' Convert node grid positions to indices
+#'
+#' @description
+#' Function takes a vectors of x and y node indices and returns the index
+#' (numbered row-wise)
+#'
+#' @inheritParams index_vector2grid
+#' @param ix,iy arrays with index of position in x and y directions
+#' @return array with node index for each node
+#' @examples
+#' #define grid
+#' nx <- 4
+#' ny <- 3
+#'
+#' #including ghost nodes
+#' i <- seq(nodes_total(nx, ny))
+#' ixy <- index_vector2grid(i, nx, ny)
+#' index_grid2vector(ixy$ix, ixy$iy, nx, ny)
+#'
+#' #excluding ghost nodes
+#' i <- seq(nodes_total(nx, ny, real_only = TRUE))
+#' ixy <- index_vector2grid(i, nx, ny, real_only = TRUE)
+#' index_grid2vector(ixy$ix, ixy$iy, nx, ny, real_only = TRUE)
+#' @export
+
+index_grid2vector <- function(ix, iy, nx, ny, i0 = 0, real_only = FALSE, ...) {
+  if (real_only == TRUE) {
+    return(i0 + ix + nx*(iy - 1))
+  } else {
+    return(
+      i0 + (iy - 1)*(nx + 2) + 1 + nx + ix +
+        as.integer(iy == 0) -
+        as.integer(iy == (ny + 1))
+    )
+  }
+}
+
+
+#' Convert node position to grid x-y position
+#'
+#' @description
+#' Function takes a vector of node indices (numbered row-wise) and
+#' returns a list of their x and y indices.
+#'
+#' @param i array with node indices
+#' @param nx,ny number of real nodes in x and y directions
+#' @param i0 node index offset
+#' @param real_only if `TRUE`, only real nodes are numbered and ghost nodes
+#'   are ignored in numbering
+#' @param ... additional arguments to pass
+#' @return a list with two fields: `ix` and `iy` with indices in x and y
+#'   directions
+#' @examples
+#' #convert to grid positions
+#' nx <- 4
+#' ny <- 3
+#' i <- seq(1, (nx + 2)*(ny + 2) - 4)
+#' index_vector2grid(i, nx, ny)
+#' @export
+
+index_vector2grid <- function(i, nx, ny, i0 = 0, real_only = FALSE, ...) {
+  if (real_only == TRUE) {
+    return(list(
+      ix = 1 + (i - i0 - 1)%%nx,
+      iy = 1 + floor((i - i0 - 1)/nx)
+    ))
+  } else {
+    return(list(
+      ix = (i - i0 - nx - 1)%%(nx + 2) -
+        as.integer((i - i0) <= nx) +
+        as.integer((i - i0) >= ((nx + 2)*(ny + 1) - 1)),
+      iy = floor((i - i0 + 1)/(nx + 2))
+    ))
+  }
+}
+
+
+#' Get indices of all real nodes
+#'
+#' @description
+#' Get an array of the indices of all real nodes in a rectangular grid. For
+#' node numbering, see function `findiff_sparse_elements()`
+#'
+#' @inheritParams index_edge
+#' @return array of indices for all real nodes (non-ghost nodes)
+#' @export
+
+index_real <- function(nx, ny, i0 = 0, real_only = FALSE, ...) {
+  if (real_only == TRUE) {
+    return(i0 + seq(nx*ny))
+  } else {
+    return(i0 + rep(seq(nx), ny) + rep(seq(ny), each = nx)*(nx + 2) - 1)
+  }
+}
+
+
+#' Find indices of neighbouring nodes
+#'
+#' @description
+#' Find indices of neighbouring nodes in a rectangular grid with or without
+#' ghost nodes. Nodes are numbered row-wise. Function assumes that these
+#' nodes exist, e.g. no check is conducted to see if this is so...
+#'
+#' @inheritParams index_vector2grid
+#' @param dix,diy index offsets in x and y-directions
+#' @return a list of indices of neightbouring nodes
+#' @examples
+#' nx <- 4
+#' ny <- 3
+#' i <- c(1, 11, 20)
+#' index_offset(i, nx, ny, dix = 1)
+#' index_offset(i, nx, ny, diy = 1)
+#' @export
+
+index_offset <- function(
+  i,
+  nx, ny,
+  dix = 0, diy = 0,
+  i0 = 0, real_only = FALSE, ...
+){
+  ixy <- index_vector2grid(i, nx, ny, i0 = i0, real_only = real_only)
+  return(index_grid2vector(
+    ixy$ix + dix, ixy$iy + diy,
+    nx, ny,
+    i0 = i0, real_only = real_only))
+}
+
+
 #' Get indices of nodes near edge of grid
 #'
 #' @description
 #' Get an array of the indices of nodes near an edge of a rectangular grid.
-#' For node numbering, see function `findiff_sparse_entries()`.
+#' For node numbering, see function `findiff_sparse_elements()`.
 #'
 #' @param nx,ny number of real nodes in x and y-direction
 #' @param edge edge number, numbered clockwise. `1` for left (negative x-face),
@@ -271,151 +455,4 @@ index_edge <- function(nx, ny, edge, real_only = FALSE, i0 = 0, offset = 0, ...)
       return(i0 + seq(nx) + offset*(nx + 2) - ifelse(offset > 0, 1, 0))
     }
   }
-}
-
-
-#' Get grid index of nodes in specific direction
-#'
-#' @description
-#' Gets the x or y position index from a list of node indices. For the
-#' node numbering system, see documentation of function
-#' `findiff_sparse_entries()`
-#'
-#' @param i indices of nodes
-#' @param nx,ny number of real nodes in x and y-direction
-#' @param direction direction of index to find. Should be `x` or `y`
-#' @param real_only if `TRUE`, only real nodes are numbered. if `FALSE`, all
-#'   ghost nodes are included in the numbering as well
-#' @param i0 node starting number (index of first node minus 1)
-#' @param real_only if `TRUE`, only include real nodes in numbering,
-#' @param ... additional named arguments to pass to function
-#' @return vector with domain indices in x or y-direction
-#' @examples
-#' #number of real nodes in grid
-#' nx <- 4
-#' ny <- 3
-#'
-#' #real + ghost nodes
-#' i <- seq(nodes_total(nx, ny, real_only = FALSE))
-#' index_vector2grid(i, nx, ny, direction = "x", real_only = FALSE)
-#' index_vector2grid(i, nx, ny, direction = "y", real_only = FALSE)
-#'
-#' #real nodes only
-#' i <- seq(nodes_total(nx, ny, real_only = TRUE))
-#' index_vector2grid(i, nx, ny, direction = "x", real_only = TRUE)
-#' index_vector2grid(i, nx, ny, direction = "y", real_only = TRUE)
-#' @export
-
-index_vector2grid <- function(i, nx,ny, direction = "x", i0 = 0, real_only = FALSE, ...) {
-  if (real_only == TRUE) {
-    if (direction == "x") {
-      return(1 + ((i - i0) - 1)%%nx)
-    } else if (direction == "y") {
-      return(1 + floor(((i - i0) - 1)/nx))
-    }
-  } else {
-    if (direction == "x") {
-      return(((i - i0) - 1 - nx)%%(nx + 2) - as.double((i - i0) <= nx) + as.double(((i - i0) + 1) >= (nx + 2)*(ny + 1)))
-    } else if (direction == "y") {
-      return(1 + floor(((i - i0) - 1 - nx)/(nx + 2)))
-    }
-  }
-}
-
-
-#' Get array index of node based on x and y-indices
-#'
-#' @description
-#' Get the indices in the 1-D node array for rectangle with regularly spaced
-#' nodes, based on x and y-position indices. For the ndde numbering system
-#' used, see documentation of function `findiff_sparse_entries()`
-#'
-#' @param nx,ny number of real nodes in x and y-direction
-#' @param ix,iy scalar of x and y-index. If one of these is left empty
-#'   (`NULL`), all array indices in that row or column are returned
-#' @param i0 offset for the index of the first node
-#' @param real_only if `TRUE`, the grid is assumed to contain only real nodes,
-#'   so there are `nx*ny` nodes. If `FALSE`, the grid is assumed to contain
-#'   ghost nodes on the sides of each of the four edges of the grid, resulting
-#'   in `nx*ny + 2*nx + 2*ny` nodes. These are numbered in row-wise order,
-#'   starting with the left-most ghost node underneath the lower edge
-#' @param ... extra arguments
-#' @return array of indices
-#' @examples
-#' index_grid2vector(4, 3, ix = 2, real_only = TRUE)
-#' index_grid2vector(4, 3, ix = 2, real_only = FALSE)
-#' @export
-
-index_grid2vector <- function(nx, ny, ix = NULL, iy = NULL, i0 = 0, real_only = FALSE, ...) {
-  if (real_only == TRUE) {
-    if (is.null(ix) & is.null(iy)) {
-      return(NULL)
-    } else if (is.null(ix)) {
-      ix <- seq(nx)
-    } else if (is.null(iy)) {
-      iy <- seq(ny)
-    }
-    return(i0 + ix + (iy - 1)*nx)
-  } else {
-    if (is.null(ix) & is.null(iy)) {
-      return(NULL)
-    } else if (is.null(ix)) {
-      if (iy %in% c(0, ny + 1)) {
-        ix <- seq(1, nx)
-      } else {
-        ix <- seq(0, nx + 1)
-      }
-    } else if (is.null(iy)) {
-      if (ix %in% c(0, nx + 1)) {
-        iy <- seq(1, ny)
-      } else {
-        iy <- seq(0, ny + 1)
-      }
-    }
-    return(ix + iy*(nx + 2) - ifelse(iy > 0, 1, 0) - ifelse(iy > ny, 1, 0))
-  }
-}
-
-
-#' Get coordinates of all real nodes in the finite difference grid
-#'
-#' @description
-#' Function obtains the x,y positions of all real nodes in the finite difference
-#' grid
-#'
-#' @param nx,ny number of real nodes on the grid
-#' @param x0,x1,y0,y1 x and y-positions of domain edges
-#' @param id array with domain identifiers
-#' @param ... additional named arguments to pass to function
-#' @importFrom magrittr `%>%`
-#' @return a tibble with fields `x` and `y` for positions, and `id` to indicate
-#'   which grid the point belongs to
-#' @examples
-#' df <- nodal_coordinates_real(
-#'   nx = c(4, 5),
-#'   ny = c(3, 4),
-#'   x0 = c(0, 4),
-#'   y0 = c(0, 4),
-#'   x1 = c(2, 7),
-#'   y1 = c(3, 5)
-#' )
-#' plot(df$x, df$y, "b")
-#' @export
-
-nodal_coordinates_real <- function(nx, ny, x0 = 0, y0 = 0, x1 = 1, y1 = 1, id = NULL, ...) {
-  df <- tibble::tibble(nx = nx, ny = ny, x0 = x0, y0 = y0, x1 = x1, y1 = y1)
-  if (is.null(id)) {
-    df$id <- seq(nrow(df))
-  } else {
-    df$id <- id
-  }
-  df %>%
-    dplyr::rowwise() %>%
-    dplyr::summarise(
-      id = id,
-      ix = rep(seq(nx), ny),
-      iy = rep(seq(ny), each = nx),
-      x = rep(seq(x0, x1, l = nx), ny),
-      y = rep(seq(y0, y1, l = ny), each = nx)
-    )
 }

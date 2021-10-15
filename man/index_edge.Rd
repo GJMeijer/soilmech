@@ -28,7 +28,7 @@ array of indices of ghost nodes on selected edge
 }
 \description{
 Get an array of the indices of nodes near an edge of a rectangular grid.
-For node numbering, see function `findiff_sparse_entries()`.
+For node numbering, see function `findiff_sparse_elements()`.
 }
 \examples{
 #real nodes + ghost nodes
