@@ -7,7 +7,7 @@
 #'
 #' Domains that are next to each other in the grid are automatically connected.
 #' All boundary conditions are assumed impermeable, unless otherwise defined
-#' using the inputs `bc_id`, `bc_edge`, `bc_type` and `bc_value`.
+#' using the inputs `bc_domain`, `bc_edge`, `bc_type` and `bc_value`.
 #'
 #' @param x x-coordinates of boundary lines in the grid
 #' @param y y-coordinates of boundary lines in the grid
@@ -16,7 +16,7 @@
 #' @param kx,ky horizontal and vertical permeabilities. Either define as
 #'   arrays (with length n), or as scalars if the permeability is the same
 #'   in each domain
-#' @param bc_id domain at which the boundary condition applies (array with
+#' @param bc_domain domain at which the boundary condition applies (array with
 #'   length m, the integers relate to the position in `ix`,`iy`)
 #' @param bc_edge edge in domain at which the boundary condition applies (
 #'   array with length m). Edges are numbered clockwise: `1` for left
@@ -47,7 +47,7 @@ flownet_geometry_rectangular <- function(
   iy = c(4, 3, 2, 1, 1, 1, 2),
   kx = 1e-6,
   ky = 1e-6,
-  bc_id = c(1, 7),
+  bc_domain = c(1, 7),
   bc_edge = c(2, 2),
   bc_type  = c("h", "h"),
   bc_value = c(17.5, 15),
@@ -68,7 +68,7 @@ flownet_geometry_rectangular <- function(
   #generate numbers of nodes
   dom <- dplyr::mutate(
     dom,
-    id = seq(dplyr::n()),
+    domain = seq(dplyr::n()),
     nx = pmax(node_min, 1 + ceiling((.data$x1 - .data$x0)/grid_size)),
     ny = pmax(node_min, 1 + ceiling((.data$y1 - .data$y0)/grid_size)),
     hx = (.data$x1 - .data$x0)/(.data$nx - 1),
@@ -84,7 +84,7 @@ flownet_geometry_rectangular <- function(
   )
   #generate tibble with all default boundary conditions (impermeable boundaries)
   bc <- tibble::tibble(
-    id = rep(seq(nrow(dom)), each = 4),
+    domain = rep(seq(nrow(dom)), each = 4),
     edge = rep(seq(4), nrow(dom)),
     type = "q",
     value = 0
@@ -113,10 +113,10 @@ flownet_geometry_rectangular <- function(
     }
   }
   #add boundary conditions for head or flow
-  bc$id[4*(bc_id - 1) + bc_edge] <- bc_id
-  bc$edge[4*(bc_id - 1) + bc_edge] <- bc_edge
-  bc$type[4*(bc_id - 1) + bc_edge] <- bc_type
-  bc$value[4*(bc_id - 1) + bc_edge] <- bc_value
+  bc$domain[4*(bc_domain - 1) + bc_edge] <- bc_domain
+  bc$edge[4*(bc_domain - 1) + bc_edge] <- bc_edge
+  bc$type[4*(bc_domain - 1) + bc_edge] <- bc_type
+  bc$value[4*(bc_domain - 1) + bc_edge] <- bc_value
   #return
   return(list(dom = dom, bc = bc))
 }
@@ -144,7 +144,7 @@ flownet_geometry_rectangular <- function(
 
 findiff_sparse_entries_bc_rectangular <- function(df) {
   #join domain properties onto boundary conditions
-  dbc <- dplyr::left_join(df$bc, df$dom, by = "id") %>%
+  dbc <- dplyr::left_join(df$bc, df$dom, by = "domain") %>%
     dplyr::mutate(
       k = ifelse((.data$edge %in% c(1, 3)), .data$kx, .data$ky),
       h = ifelse((.data$edge %in% c(1, 3)), .data$hx, .data$hy)
@@ -179,7 +179,7 @@ findiff_sparse_entries_bc_rectangular <- function(df) {
     } else if (dbc$type[i] == "c") {
       #connected to other domain (b)
       #index in <dbc> of connecting edge
-      ib <- which((dbc$id == dbc$value[i]) & (dbc$edge == (1 + (dbc$edge[i] + 1)%%4)))
+      ib <- which((dbc$domain == dbc$value[i]) & (dbc$edge == (1 + (dbc$edge[i] + 1)%%4)))
       if (dbc$edge[i] %in% c(2, 3)) {
         #other domain connected on positive side - same head
         ia1 <- index_edge(dbc$nx[i], dbc$ny[i], dbc$edge[i], i0 = dbc$i0[i], offset = 0)
@@ -246,17 +246,17 @@ findiff_sparse_entries_bc_rectangular <- function(df) {
 #' plot(df$x, df$y, "b")
 #' @export
 
-nodal_coordinates_real_rectangular <- function(nx, ny, x0 = 0, y0 = 0, x1 = 1, y1 = 1, id = NULL, ...) {
+nodal_coordinates_real_rectangular <- function(nx, ny, x0 = 0, y0 = 0, x1 = 1, y1 = 1, domain = NULL, ...) {
   df <- tibble::tibble(nx = nx, ny = ny, x0 = x0, y0 = y0, x1 = x1, y1 = y1)
-  if (is.null(id)) {
-    df$id <- seq(nrow(df))
+  if (is.null(domain)) {
+    df$domain <- seq(nrow(df))
   } else {
-    df$id <- id
+    df$domain <- domain
   }
   df %>%
     dplyr::rowwise() %>%
     dplyr::summarise(
-      id = id,
+      domain = domain,
       ix = rep(seq(nx), ny),
       iy = rep(seq(ny), each = nx),
       x = rep(seq(x0, x1, l = nx), ny),
@@ -353,7 +353,7 @@ solve_flownet_rectangular <- function(df) {
         x1 = .data$x1,
         y0 = .data$y0,
         y1 = .data$y1,
-        id = .data$id
+        domain = .data$domain
       )
     )
   #add head and flow for all real points
@@ -531,6 +531,70 @@ ggplot_add_flownet_rectangular <- function(
 }
 
 
+#' Create polygons from gridded points
+#'
+#' @description
+#' Get the node indices of the four corner points of a series of grids
+#'
+#' @param df list with flownet problem definition
+#' @param dp list with flownet results, per node. This dataframe should
+#'   contain a field with the name `val` that is used to calculate a
+#'   value for each polygon
+#' @return tibble with polygon data. Unique polygons are differentiated
+#'   using the unique identifier in the field `id`. Interpolated values
+#'   are stored in field `val`, and the positions of the corner points
+#'   in `x` and `y`
+#' @examples
+#' #calculate
+#' df <- flownet_geometry_rectangular(grid_size = 2)
+#' dp <- solve_flownet_rectangular(df)
+#' dpol <- grid2polygon(df, dp %>% dplyr::rename("val" = "h"))
+#'
+#' #plot
+#' ggplot2::ggplot() +
+#'   ggplot2::geom_polygon(
+#'     data = dpol,
+#'     ggplot2::aes(x = x, y = y, fill = val, group = id),
+#'     color = NA
+#'   )
+#' @export
+
+grid2polygon <- function(df, dp){
+  #get indices of polygons
+  return(purrr::pmap_dfr(
+    df$dom %>% dplyr::select(.data$nx, .data$ny, .data$i0_real),
+    function(nx, ny, i0_real) {
+      tibble::tibble(
+        i1 = i0_real + rep(seq(1, nx - 1), ny - 1) + nx*rep(seq(0, ny - 2), each = nx - 1),
+        i2 = i0_real + rep(seq(1, nx - 1), ny - 1) + nx*rep(seq(1, ny - 1), each = nx - 1),
+        i3 = i0_real + rep(seq(2, nx), ny - 1) + nx*rep(seq(1, ny - 1), each = nx - 1),
+        i4 = i0_real + rep(seq(2, nx), ny - 1) + nx*rep(seq(0, ny - 2), each = nx - 1)
+      )
+    }
+  ) %>%
+    #get properties and positions
+    dplyr::mutate(
+      id = seq(dplyr::n()),
+      val = (dp$val[i1] + dp$val[i2] + dp$val[i3] + dp$val[i4])/4,
+      x1 = dp$x[i1],
+      x2 = dp$x[i2],
+      x3 = dp$x[i3],
+      x4 = dp$x[i4],
+      y1 = dp$y[i1],
+      y2 = dp$y[i2],
+      y3 = dp$y[i3],
+      y4 = dp$y[i4]
+    ) %>%
+    #convert to long form
+    tidyr::pivot_longer(
+      cols = c("x1", "x2", "x3", "x4", "y1", "y2", "y3", "y4"),
+      names_to = c(".value", "set"),
+      names_pattern = "(.+)(.+)"
+    )
+  )
+}
+
+
 #' ggplot 2D map of hydraulic heads and pressures
 #'
 #' @description
@@ -638,22 +702,12 @@ ggplot_add_hydraulichead_rectangular <- function(
   }
   #plot colourmap
   if (is.character(palette) == TRUE) {
-    #shift all cells by half a grid width in postive x and y-direction, for better
-    #color shading plotting
-    dp2 <- dplyr::left_join(
-      dp,
-      df$dom %>% dplyr::select(.data$id, .data$hx, .data$hy, .data$nx, .data$ny),
-      by = "id"
-    ) %>%
-      dplyr::mutate(
-        x_max = .data$x + .data$hx,
-        y_max = .data$y + .data$hy
-      ) %>%
-      dplyr::filter((.data$ix < .data$nx) & (.data$iy < .data$ny))
-    #plot fill + labels
-    plt <- plt + ggplot2::geom_rect(
-      data = dp2,
-      ggplot2::aes(xmin = .data$x, xmax = .data$x_max, ymin = .data$y, ymax = .data$y_max, fill = .data$val)
+    #generate polygons with averages of the four corner points
+    dpol <- grid2polygon(df, dp)
+    #add to plot
+    plt <- plt + ggplot2::geom_polygon(
+      data = dpol,
+      ggplot2::aes(x = .data$x, y = .data$y, group = .data$id, fill = .data$val)
     ) +
     ggplot2::scale_fill_distiller(
       name = label,
