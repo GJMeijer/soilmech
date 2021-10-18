@@ -11,7 +11,7 @@ flownet_geometry_rectangular(
   iy = c(4, 3, 2, 1, 1, 1, 2),
   kx = 1e-06,
   ky = 1e-06,
-  bc_id = c(1, 7),
+  bc_domain = c(1, 7),
   bc_edge = c(2, 2),
   bc_type = c("h", "h"),
   bc_value = c(17.5, 15),
@@ -32,7 +32,7 @@ flownet_geometry_rectangular(
 arrays (with length n), or as scalars if the permeability is the same
 in each domain}
 
-\item{bc_id}{domain at which the boundary condition applies (array with
+\item{bc_domain}{domain at which the boundary condition applies (array with
 length m, the integers relate to the position in `ix`,`iy`)}
 
 \item{bc_edge}{edge in domain at which the boundary condition applies (
@@ -64,7 +64,7 @@ may be defined seperately.
 
 Domains that are next to each other in the grid are automatically connected.
 All boundary conditions are assumed impermeable, unless otherwise defined
-using the inputs `bc_id`, `bc_edge`, `bc_type` and `bc_value`.
+using the inputs `bc_domain`, `bc_edge`, `bc_type` and `bc_value`.
 }
 \examples{
 flownet_geometry_rectangular()

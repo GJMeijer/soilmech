@@ -391,6 +391,8 @@ poissons_eq_quadrilateral <- function(
 #' @return list with two elements. `mat` contains a tibble with all sparse
 #'   matrix elements (`row`, `col`, `val`), and `lhs` contains a vector
 #'   with all left-hand side of equation values
+#' @importFrom magrittr `%>%`
+#' @importFrom rlang .data
 #' @examples
 #' df <- flownet_geometry_quadrilateral()
 #' matrix_sparse_head_quadrilateral(df)
@@ -534,6 +536,8 @@ matrix_sparse_head_quadrilateral <- function(df) {
 #' @return a tibble with domains (`domain`) and positions of all nodes
 #'   (`a`, `b`, `x`, `y`) and solutions for head (`h`), flow rates (`qx`,
 #'   `qy`) and flow potential (`psi`)
+#' @importFrom magrittr `%>%`
+#' @importFrom rlang .data
 #' @examples
 #' df <- flownet_geometry_quadrilateral(grid_size = 0.1)
 #' flownet_solve_quadrilateral(df)
@@ -692,6 +696,9 @@ flownet_solve_quadrilateral <- function(df) {
 #' @param grid_size grid size to use for rectangular interpolation grid. If
 #'   not defined, it is chosen roughly in line with the smallest quadrilateral
 #'   grid cell
+#' @return a tibble with flow net results at an rectangular grid
+#' @importFrom magrittr `%>%`
+#' @importFrom rlang .data
 #' @examples
 #' df <- flownet_geometry_quadrilateral(grid_size = 0.25)
 #' dp <- flownet_solve_quadrilateral(df)
@@ -854,114 +861,21 @@ flownet_interpolate_quadrilateral <- function(
     dims = c(nrow(di), sum(df$dom$nx*df$dom$ny))
   )
   #calculate
-  di$h <- as.vector((Mint %*% dp$h))
-  di$qx <- as.vector((Mint %*% dp$qx))
-  di$qy <- as.vector((Mint %*% dp$qy))
-  di$psi <- as.vector((Mint %*% dp$psi))
-  #return
-  return(di %>% dplyr::select(
-    .data$domain, .data$x, .data$y, .data$a, .data$b,
-    .data$h, .data$qx, .data$qy, .data$psi
-  ))
-}
-
-
-#' Add flownet (quadrilateral domains) to an existing ggplot
-#'
-#' @description
-#' Function to add a flow net to an existing ggplot. If the plot does not
-#' exist yet, a new one if created
-#'
-#' @param df tibble with domains/problem description
-#' @param dp flow net solution tibble. If not specified, it is calculated
-#'   using `df`
-#' @param di flow net solution interpolated on a regular rectangular
-#'   domain. If not specified, it is calculated using `dp`
-#' @param Nf number of requested flow paths
-#' @param linewidth line thickness for all lines
-#' @param colour_flowline colour of flow lines
-#' @param colour_equipotentialline colour of equipotential lines
-#' @param fill fill colour for (saturated) soil
-#' @param plt a ggplot object. If not defined, a new plot is generated
-#' @param xlab,ylab x and y-axis label - if `plt` not defined
-#' @param xlim,ylim user-defined axis limits - if `plt` not defined
-#' @param axes if `FALSE` no axes are plotted - if `plt` not defined
-#' @return a ggplot object
-#' @importFrom magrittr `%>%`
-#' @importFrom rlang .data
-#' @examples
-#' #standard example
-#' df <- flownet_geometry_quadrilateral(grid_size = 0.05)
-#' dp <- flownet_solve_quadrilateral(df)
-#' di <- flownet_interpolate_quadrilateral(df, dp)
-#' ggplot_add_flownet_quadrilateral(df, dp, di, Nf = 6)
-#' @export
-
-ggplot_add_flownet_quadrilateral <- function(
-  df,
-  dp = NULL,
-  di = NULL,
-  Nf = 5,
-  linewidth = 0.5,
-  colour_flowline = "black",
-  colour_equipotentialline = "black",
-  fill = "#aebab7",
-  plt = NULL,
-  xlab = "x [m]",
-  ylab = "z [m]",
-  xlim = c(NA, NA),
-  ylim = c(NA, NA),
-  axes = TRUE
-){
-  #if dp not provided, calculate heads and flow potential for all gridpoints
-  if (is.null(dp)) {
-    dp <- flownet_solve_quadrilateral(df)
+  if ("h" %in% colnames(dp)) {
+    di$h <- as.vector((Mint %*% dp$h))
   }
-  #if di (interpolation) not provided, calculate
-  if (is.null(di)) {
-    di <- flownet_interpolate_quadrilateral(df, dp)
+  if ("qx" %in% colnames(dp)) {
+    di$qx <- as.vector((Mint %*% dp$qx))
   }
-  #calculate number of equamoutipotential intervals
-  Nd <- amount_equipotentialintervals(df, dp, Nf = Nf)
-  Nd_levels <- seq(min(dp$h), max(dp$h), l = (Nd + 1))[2:Nd]
-  Nf_levels <- seq(min(dp$psi), max(dp$psi), l = (Nf + 1))
-  #if plot does not exist, generate a new one
-  if (is.null(plt)) {
-    plt <- ggplot_geometry(xlim = xlim, ylim = ylim, axes = axes, xlab = xlab, ylab = ylab)
+  if ("qy" %in% colnames(dp)) {
+    di$qy <- as.vector((Mint %*% dp$qy))
   }
-  #create polygon objects by pivot_wider geometry data
-  dpol <- tidyr::pivot_longer(
-    df$dom,
-    cols = c("x1", "x2", "x3", "x4", "y1", "y2", "y3", "y4"),
-    names_to = c(".value", "set"),
-    names_pattern = "(.+)(.+)"
-  )
-  #plot polygon soil elements
-  plt <- plt + ggplot2::geom_polygon(
-    data = dpol,
-    ggplot2::aes(x = .data$x, y = .data$y, group = as.factor(.data$domain)),
-    fill = fill,
-    color = NA
-  )
-  #add flow and equipotential lines using contour lines
-  if (is.character(colour_equipotentialline) == TRUE) {
-    plt <- plt + ggplot2::geom_contour(
-      data = di,
-      ggplot2::aes(x = .data$x, y = .data$y, z = .data$h),
-      breaks = Nd_levels,
-      color = colour_equipotentialline,
-      size = linewidth
-    )
+  if ("psi" %in% colnames(dp)) {
+    di$psi <- as.vector((Mint %*% dp$psi))
   }
-  if (is.character(colour_flowline) == TRUE) {
-    plt <- plt + ggplot2::geom_contour(
-      data = di,
-      ggplot2::aes(x = .data$x, y = .data$y, z = .data$psi),
-      breaks = Nf_levels,
-      color = colour_flowline,
-      size = linewidth
-    )
+  if ("val" %in% colnames(dp)) {
+    di$val <- as.vector((Mint %*% dp$val))
   }
   #return
-  return(plt)
+  return(di)
 }

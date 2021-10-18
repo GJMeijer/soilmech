@@ -11,7 +11,7 @@ nodal_coordinates_real_rectangular(
   y0 = 0,
   x1 = 1,
   y1 = 1,
-  id = NULL,
+  domain = NULL,
   ...
 )
 }
@@ -20,7 +20,7 @@ nodal_coordinates_real_rectangular(
 
 \item{x0, x1, y0, y1}{x and y-positions of domain edges}
 
-\item{id}{array with domain identifiers}
+\item{domain}{array with domain identifiers}
 
 \item{...}{additional named arguments to pass to function}
 }

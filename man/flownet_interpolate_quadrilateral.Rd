@@ -16,6 +16,9 @@ function `flownet_geometry_quadrilateral()` for more information}
 not defined, it is chosen roughly in line with the smallest quadrilateral
 grid cell}
 }
+\value{
+a tibble with flow net results at an rectangular grid
+}
 \description{
 Take a flow net solution calculated on a quadrilateral grid, and
 interpolate the results on a regular grid. This grid can be used
