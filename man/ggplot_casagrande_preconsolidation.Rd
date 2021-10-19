@@ -11,7 +11,9 @@ ggplot_casagrande_preconsolidation(
   ylim = c(NA, NA),
   palette = "Set1",
   label_line = c("1", "2", "3", "4", "5", "sigma*minute[v*\\",\\"*0]"),
-  stages = seq(6)
+  stages = seq(6),
+  include_value = TRUE,
+  nsignif = 2
 )
 }
 \arguments{
@@ -28,8 +30,8 @@ defined, these limits are determined automatically}
 \itemize{
 \item string for tangent line at maximum curvature (1)
 \item string for horizontal line (2)
+\item string for bisection line between lines (1) and (2)
 \item string for tangent line virgin behaviour (3)
-\item string for bisection line between lines (2) and (3)
 \item string for vertical line down from intersection lines (3) and (4)
 \item string for preconsolidation pressure label
 }}
@@ -39,10 +41,16 @@ defined, these limits are determined automatically}
 \item \code{1}: adds smooth trace through measurement points
 \item \code{2}: adds trangent at max curvature
 \item \code{3}: adds horizontal line at max curvature
-\item \code{4}: adds tangent at virgin compression
-\item \code{5}: adds bisection line between 3 and 4
+\item \code{4}: adds bisection line between 2 and 3
+\item \code{5}: adds tangent at virgin compression
 \item \code{6}: adds vertical at intersection of 4 and 5
 }}
+
+\item{include_value}{if \code{TRUE}, the value of the preconsolidation pressure
+is added to the plotted label}
+
+\item{nsignif}{the number of significant digits to use in the (rounded)
+value of the show preconsolidation pressure (if \code{include_value = TRUE})}
 }
 \description{
 Function to create a ggplot showing how Casagrande's method for determining

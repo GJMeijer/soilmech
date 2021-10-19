@@ -4,14 +4,13 @@
 #' Calculates the degree of consolidation Uv in a double-drained
 #' soil layer at a certain (normalised) times: Tv = c_v*t/d^2 and
 #' at certain (normalised) position in the layer (zd = z/d), where
-#' 'd' is half the thickness of the layer
+#' 'd' is half the thickness of the open layer
 #'
 #' Initial excess pore pressure is assumed to be uniform across the
 #' entire soil layer
 #'
 #' Solution uses the fourier series method to solve the consolidation
-#' equation, detailed on Wikipedia at
-#' https://en.wikipedia.org/wiki/Heat_equation
+#' equation, detailed in Craig's Soil Mechanics, among others
 #'
 #' @param zd normalised depth (array)
 #' @param Tv normalised time (array)
@@ -30,13 +29,13 @@ calculate_consolidation_openlayer <- function(
   tibble::tibble(
     zd = zd,
     Tv = Tv
-  ) %>% tidyr::expand_grid(n = seq(nfourier)) %>%
+  ) %>%
+    tidyr::expand_grid(m = seq(nfourier)) %>%
     dplyr::mutate(
-      Dn = 2/(pi*.data$n)*(1 - cos(pi*.data$n)),
-      u = .data$Dn*sin(0.5*pi*.data$n*.data$zd)*exp(-pi^2*.data$n^2*.data$Tv/4)
-    ) %>%
+      M = pi/2*(2*.data$m + 1),
+      ue = 2/.data$M*sin(.data$M*.data$zd)*exp(-.data$M^2*.data$Tv)) %>%
     dplyr::group_by(.data$zd, .data$Tv) %>%
-    dplyr::summarize(Uv = 1 - sum(.data$u)) %>%
+    dplyr::summarize(Uv = 1 - sum(.data$ue)) %>%
     dplyr::pull(.data$Uv)
 }
 

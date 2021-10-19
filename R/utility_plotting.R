@@ -103,12 +103,9 @@ round_limits <- function(
   } else {
     #log scale - orders of magnitude
     oom1 <- floor(log10(min(vals)))
-    oom2 <- floor(log10(max(vals)))
+    oom2 <- ceiling(log10(max(vals)))
     #values
-    lims <- c(
-      utils::tail(vals_round[vals_round <= (min(vals)/(10^oom1))], 1) * 10^oom1,
-      utils::head(vals_round[vals_round >= (max(vals)/(10^oom2))], 1) * 10^oom2
-    )
+    lims <- c(10^oom1, 10^oom2)
   }
   #override with user-specified limits
   if (!is.na(lower) & !is.null(lower)) {

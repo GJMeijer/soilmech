@@ -20,12 +20,11 @@ array with degrees of consolidation (between 0 and 1)
 Calculates the degree of consolidation Uv in a double-drained
 soil layer at a certain (normalised) times: Tv = c_v*t/d^2 and
 at certain (normalised) position in the layer (zd = z/d), where
-'d' is half the thickness of the layer
+'d' is half the thickness of the open layer
 
 Initial excess pore pressure is assumed to be uniform across the
 entire soil layer
 
 Solution uses the fourier series method to solve the consolidation
-equation, detailed on Wikipedia at
-https://en.wikipedia.org/wiki/Heat_equation
+equation, detailed in Craig's Soil Mechanics, among others
 }
