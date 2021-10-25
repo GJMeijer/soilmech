@@ -37,6 +37,7 @@
 #'   works properly
 #' @importFrom rlang .data
 #' @examples
+#' #standard example
 #' flownet_geometry_rectangular()
 #' @export
 
@@ -308,7 +309,6 @@ flownet_solve_rectangular <- function(df) {
     dims = rep(sum(df$dom$n), 2)
   )
   #bind together, and solve system
-  #h = as.vector(Matrix::solve(mat, Mbc$lhs))
   h <- as.vector(
     Matrix::solve(
       Matrix::t(mat) %*% mat,
@@ -317,38 +317,38 @@ flownet_solve_rectangular <- function(df) {
   )
 
   ## CALCULATE FLOW FROM HEAD
+  #indices of real nodes
+  i_real <- purrr::pmap(df$dom, index_real) %>% unlist()
   #flow in x-direction
   M1qx <- df$dom %>%
-    dplyr::select(.data$nx, .data$ny, .data$kx, .data$x0, .data$x1, .data$i0) %>%
+    dplyr::select(.data$nx, .data$ny, .data$kx, .data$x0, .data$x1, .data$i0_real) %>%
     purrr::pmap_dfr(
-      function(nx, ny, kx, x0, x1, i0) findiff_sparse_elements(nx, ny, direction = "x", i0 = i0, multiplier = -kx/(x1 - x0))
+      function(nx, ny, kx, x0, x1, i0_real) findiff_sparse_elements_realonly(nx, ny, direction = "x", i0 = i0_real, multiplier = -kx/(x1 - x0))
     )
-  qx <- as.vector(
+  qx_real <- as.vector(
     Matrix::sparseMatrix(
       i = M1qx$row,
       j = M1qx$col,
       x = M1qx$val,
-      dims = rep(sum(df$dom$n), 2)
-    ) %*% h
+      dims = rep(sum(df$dom$n_real), 2)
+    ) %*% h[i_real]
   )
   #flow in y-direction
   M1qy <- df$dom %>%
-    dplyr::select(.data$nx, .data$ny, .data$ky, .data$y0, .data$y1, .data$i0) %>%
+    dplyr::select(.data$nx, .data$ny, .data$ky, .data$y0, .data$y1, .data$i0_real) %>%
     purrr::pmap_dfr(
-      function(nx, ny, ky, y0, y1, i0) findiff_sparse_elements(nx, ny, direction = "y", i0 = i0, multiplier = -ky/(y1 - y0))
+      function(nx, ny, ky, y0, y1, i0_real) findiff_sparse_elements_realonly(nx, ny, direction = "y", i0 = i0_real, multiplier = -ky/(y1 - y0))
     )
-  qy <- as.vector(
+  qy_real <- as.vector(
     Matrix::sparseMatrix(
       i = M1qy$row,
       j = M1qy$col,
       x = M1qy$val,
-      dims = rep(sum(df$dom$n), 2)
-    ) %*% h
+      dims = rep(sum(df$dom$n_real), 2)
+    ) %*% h[i_real]
   )
 
   ## ASSIGN SOLUTIONS AND POSITIONS (real nodes only)
-  #indices of real nodes
-  i_real <- purrr::pmap(df$dom, index_real) %>% unlist()
   #generate positions for all solution object for all nodes
   dp <- df$dom %>%
     dplyr::summarise(
@@ -366,8 +366,8 @@ flownet_solve_rectangular <- function(df) {
   dp <- dplyr::mutate(
     dp,
       h = h[i_real],
-      qx = qx[i_real],
-      qy = qy[i_real]
+      qx = qx_real,
+      qy = qy_real
     )
 
   ## GET FLOW POTENTIAL FROM FLOW

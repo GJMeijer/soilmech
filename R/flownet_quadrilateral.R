@@ -77,7 +77,9 @@ flownet_geometry_quadrilateral <- function(
       ny = pmax(node_min, (1 + ceiling(Ly/grid_size))[.data$iy]),
       #total nodes in each domain and starting number
       n = nodes_total(.data$nx, .data$ny),
-      i0 = cumsum(c(0, utils::head(.data$n, -1)))
+      n_real = nodes_total(.data$nx, .data$ny, real_only = TRUE),
+      i0 = cumsum(c(0, utils::head(.data$n, -1))),
+      i0_real = cumsum(c(0, utils::head(.data$nx * .data$ny, -1)))
     )
   #generate tibble with all default boundary conditions (impermeable boundaries)
   bc <- tibble::tibble(
@@ -560,15 +562,6 @@ flownet_solve_quadrilateral <- function(df) {
   #create matrix elements for Poissons equation
   M_el <- matrix_sparse_head_quadrilateral(df)
   #solve matrix for head h
-   #h <- as.vector(Matrix::solve(
-   #  Matrix::sparseMatrix(
-   #    i = M_el$mat$row,
-   #    j = M_el$mat$col,
-   #    x = M_el$mat$val,
-   #    dims = rep(sum(df$dom$n), 2)
-   #  ),
-   #  M_el$lhs)
-   #)
   mat <- Matrix::sparseMatrix(
     i = M_el$mat$row,
     j = M_el$mat$col,
@@ -587,32 +580,32 @@ flownet_solve_quadrilateral <- function(df) {
   ## CALCULATE FLOW RATES
   #first order derivative of head in a-direction
   D1a_el <- purrr::pmap_dfr(
-    df$dom %>% dplyr::select(.data$nx, .data$ny, .data$i0),
-    function(nx, ny, i0) findiff_sparse_elements(nx, ny, "x", i0 = i0)
+    df$dom %>% dplyr::select(.data$nx, .data$ny, .data$i0_real),
+    function(nx, ny, i0_real) findiff_sparse_elements_realonly(nx, ny, "x", i0 = i0_real)
   )
   D1a <- Matrix::sparseMatrix(
     i = D1a_el$row,
     j = D1a_el$col,
     x = D1a_el$val,
-    dims = rep(sum(df$dom$n), 2)
+    dims = rep(sum(df$dom$n_real), 2)
   )
-  h_a <- as.vector(D1a %*% h)
+  h_a <- as.vector(D1a %*% h[i_real])
   #first order derivative of head in b-direction
   D1b_el <- purrr::pmap_dfr(
-    df$dom %>% dplyr::select(.data$nx, .data$ny, .data$i0),
-    function(nx, ny, i0) findiff_sparse_elements(nx, ny, "y", i0 = i0)
+    df$dom %>% dplyr::select(.data$nx, .data$ny, .data$i0_real),
+    function(nx, ny, i0_real) findiff_sparse_elements_realonly(nx, ny, "y", i0 = i0_real)
   )
   D1b <- Matrix::sparseMatrix(
     i = D1b_el$row,
     j = D1b_el$col,
     x = D1b_el$val,
-    dims = rep(sum(df$dom$n), 2)
+    dims = rep(sum(df$dom$n_real), 2)
   )
-  h_b <- as.vector(D1b %*% h)
+  h_b <- as.vector(D1b %*% h[i_real])
   #flow rates in x and y-directions
   temp <- with(dp, x_a*y_b - x_b*y_a)
-  dp$qx <- -h_a[i_real]*df$dom$kx[dp$domain]*dp$y_b/temp + h_b[i_real]*df$dom$kx[dp$domain]*dp$y_a/temp
-  dp$qy <- h_a[i_real]*df$dom$ky[dp$domain]*dp$x_b/temp - h_b[i_real]*df$dom$ky[dp$domain]*dp$x_a/temp
+  dp$qx <- -h_a*df$dom$kx[dp$domain]*dp$y_b/temp + h_b*df$dom$kx[dp$domain]*dp$y_a/temp
+  dp$qy <- h_a*df$dom$ky[dp$domain]*dp$x_b/temp - h_b*df$dom$ky[dp$domain]*dp$x_a/temp
 
   ## CALCULATE FLOW POTENTIAL psi
   #offset to go from real nodes to all nodes
