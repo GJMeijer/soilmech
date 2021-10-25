@@ -308,7 +308,13 @@ flownet_solve_rectangular <- function(df) {
     dims = rep(sum(df$dom$n), 2)
   )
   #bind together, and solve system
-  h = as.vector(Matrix::solve(mat, Mbc$lhs))
+  #h = as.vector(Matrix::solve(mat, Mbc$lhs))
+  h <- as.vector(
+    Matrix::solve(
+      Matrix::t(mat) %*% mat,
+      Matrix::t(mat) %*% Mbc$lhs
+    )
+  )
 
   ## CALCULATE FLOW FROM HEAD
   #flow in x-direction

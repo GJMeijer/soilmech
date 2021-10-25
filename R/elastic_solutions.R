@@ -521,7 +521,7 @@ ggplot_stress_fadum <- function(
     lab <- paste("I[z]==", round(I, nround))
     plt <- ggplot_addcrosshairs(
       plt,
-      Bz,
+      Lz,
       I,
       group = lab,
       xlim = min(d$xz0),

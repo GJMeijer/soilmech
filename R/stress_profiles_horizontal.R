@@ -195,7 +195,7 @@ plotly_stressprofile_horizontal_sigmav <- function(
       ),
       text = paste0(
         line_name[1],
-        "<br>\u03c3'<sub>v,0</sub> = ",
+        "<br>\u03c3'<sub>v,max</sub> = ",
         round(sigma_v0, nround),
         " kPa"
       ),

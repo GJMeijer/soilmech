@@ -560,14 +560,26 @@ flownet_solve_quadrilateral <- function(df) {
   #create matrix elements for Poissons equation
   M_el <- matrix_sparse_head_quadrilateral(df)
   #solve matrix for head h
-  h <- as.vector(Matrix::solve(
-    Matrix::sparseMatrix(
-      i = M_el$mat$row,
-      j = M_el$mat$col,
-      x = M_el$mat$val,
-      dims = rep(sum(df$dom$n), 2)
-    ),
-    M_el$lhs)
+   #h <- as.vector(Matrix::solve(
+   #  Matrix::sparseMatrix(
+   #    i = M_el$mat$row,
+   #    j = M_el$mat$col,
+   #    x = M_el$mat$val,
+   #    dims = rep(sum(df$dom$n), 2)
+   #  ),
+   #  M_el$lhs)
+   #)
+  mat <- Matrix::sparseMatrix(
+    i = M_el$mat$row,
+    j = M_el$mat$col,
+    x = M_el$mat$val,
+    dims = rep(sum(df$dom$n), 2)
+  )
+  h <- as.vector(
+    Matrix::solve(
+      Matrix::t(mat) %*% mat,
+      Matrix::t(mat) %*% M_el$lhs
+    )
   )
   #add solution of <h> to real points
   dp$h <- h[i_real]
