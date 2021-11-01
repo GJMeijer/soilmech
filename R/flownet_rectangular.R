@@ -308,13 +308,23 @@ flownet_solve_rectangular <- function(df) {
     x = c(Mbc$mat$val, M2x$val, M2y$val),
     dims = rep(sum(df$dom$n), 2)
   )
-  #bind together, and solve system
-  h <- as.vector(
-    Matrix::solve(
-      Matrix::t(mat) %*% mat,
-      Matrix::t(mat) %*% Mbc$lhs
+  #solve system - matrix is invertible
+  if (Matrix::det(mat) == 0) {
+    h <- as.vector(
+      Matrix::solve(
+        mat,
+        Mbc$lhs
+      )
     )
-  )
+  #solve system - matrix not invertible --> approximate solution
+  } else {
+    h <- as.vector(
+      Matrix::solve(
+        Matrix::t(mat) %*% mat,
+        Matrix::t(mat) %*% Mbc$lhs
+      )
+    )
+  }
 
   ## CALCULATE FLOW FROM HEAD
   #indices of real nodes

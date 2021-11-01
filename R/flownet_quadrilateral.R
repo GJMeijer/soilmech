@@ -568,12 +568,23 @@ flownet_solve_quadrilateral <- function(df) {
     x = M_el$mat$val,
     dims = rep(sum(df$dom$n), 2)
   )
-  h <- as.vector(
-    Matrix::solve(
-      Matrix::t(mat) %*% mat,
-      Matrix::t(mat) %*% M_el$lhs
+  #solve system - matrix is invertible
+  if (Matrix::det(mat) == 0) {
+    h <- as.vector(
+      Matrix::solve(
+        mat,
+        M_el$lhs
+      )
     )
-  )
+    #solve system - matrix not invertible --> approximate solution
+  } else {
+    h <- as.vector(
+      Matrix::solve(
+        Matrix::t(mat) %*% mat,
+        Matrix::t(mat) %*% M_el$lhs
+      )
+    )
+  }
   #add solution of <h> to real points
   dp$h <- h[i_real]
 
