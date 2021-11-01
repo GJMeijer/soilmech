@@ -568,20 +568,20 @@ flownet_solve_quadrilateral <- function(df) {
     x = M_el$mat$val,
     dims = rep(sum(df$dom$n), 2)
   )
-  #solve system - matrix is invertible
-  if (Matrix::det(mat) != 0) {
-    h <- as.vector(
-      Matrix::solve(
-        mat,
-        M_el$lhs
-      )
-    )
-    #solve system - matrix not invertible --> approximate solution
-  } else {
+  #solve system - 4-way intersections present
+  if (ispresent_4wayintersections(df)) {
     h <- as.vector(
       Matrix::solve(
         Matrix::t(mat) %*% mat,
         Matrix::t(mat) %*% M_el$lhs
+      )
+    )
+  #solve system - no 4-way intersections
+  } else {
+    h <- as.vector(
+      Matrix::solve(
+        mat,
+        M_el$lhs
       )
     )
   }

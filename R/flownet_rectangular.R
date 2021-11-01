@@ -308,20 +308,20 @@ flownet_solve_rectangular <- function(df) {
     x = c(Mbc$mat$val, M2x$val, M2y$val),
     dims = rep(sum(df$dom$n), 2)
   )
-  #solve system - matrix is invertible
-  if (Matrix::det(mat) != 0) {
-    h <- as.vector(
-      Matrix::solve(
-        mat,
-        Mbc$lhs
-      )
-    )
-  #solve system - matrix not invertible --> approximate solution
-  } else {
+  #solve system - 4-way intersections
+  if (ispresent_4wayintersections(df)) {
     h <- as.vector(
       Matrix::solve(
         Matrix::t(mat) %*% mat,
         Matrix::t(mat) %*% Mbc$lhs
+      )
+    )
+  #solve system
+  } else {
+    h <- as.vector(
+      Matrix::solve(
+        mat,
+        Mbc$lhs
       )
     )
   }
@@ -423,4 +423,50 @@ flownet_solve_rectangular <- function(df) {
   ## RETURN
   #return
   return(dp)
+}
+
+
+#' Check for 4-intersections
+#'
+#' @description
+#' Solver technique seems to get stuck when four domains are touching.
+#' The point on the 4-way intersection may throw a numerical problem. This
+#' function checks if such points exist.
+#'
+#' @param df list with dataframes with problem description
+#' @return boolean. `TRUE` if 4-way intersections exist
+#' @examples
+#' df <- flownet_geometry_rectangular()
+#' ispresent_4wayintersections(df)
+#' @export
+
+ispresent_4wayintersections <- function(df) {
+  #get number of connecting edges per domain intersection
+  di <- df$bc %>%
+    #get connections top and right
+    dplyr::filter((.data$type == "c") & (.data$edge %in% c(2, 3))) %>%
+    #get domain
+    dplyr::left_join(
+      df$dom %>% dplyr::select(.data$domain, .data$ix, .data$iy),
+      by = "domain"
+    ) %>%
+    #get indices of intersection positions (2 for each edge)
+    dplyr::rename(c("ix0" = "ix", "iy0" = "iy")) %>%
+    dplyr::mutate(
+      ix0 = ifelse((.data$edge == 3), .data$ix0 + 1, .data$ix0),
+      iy0 = ifelse((.data$edge == 2), .data$iy0 + 1, .data$iy0),
+      ix1 = ifelse((.data$edge == 2), .data$ix0 + 1, .data$ix0),
+      iy1 = ifelse((.data$edge == 3), .data$iy0 + 1, .data$iy0)
+    ) %>%
+    #sort by intersection
+    tidyr::pivot_longer(
+      cols = c("ix0", "ix1", "iy0", "iy1"),
+      names_to = c(".value", "set"),
+      names_pattern = "(.+)(.+)"
+    ) %>%
+    #count connected edges for each intersection
+    dplyr::group_by(.data$ix, .data$iy) %>%
+    dplyr::summarize(n = dplyr::n(), .groups = "keep")
+  #return
+  return(any(di$n == 4))
 }
