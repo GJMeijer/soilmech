@@ -569,7 +569,7 @@ flownet_solve_quadrilateral <- function(df) {
     dims = rep(sum(df$dom$n), 2)
   )
   #solve system - matrix is invertible
-  if (Matrix::det(mat) == 0) {
+  if (Matrix::det(mat) != 0) {
     h <- as.vector(
       Matrix::solve(
         mat,
