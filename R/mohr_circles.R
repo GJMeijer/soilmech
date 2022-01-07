@@ -299,6 +299,8 @@ ggplot_stresselement <- function(
 #' pole and the rotation angles
 #'
 #' @inheritParams ggplot_stresselement
+#' @param pole plot the pole point, label and lines if `pole = TRUE`. If
+#'   `pole = FALSE`, do not plot anything related to the pole
 #' @param pole_label label to plot at pole
 #' @param n_circle number of points to use for drawing Mohr circle
 #' @param color_circle color of the Mohr circle
@@ -321,6 +323,7 @@ ggplot_mohrcircle <- function(
   rotation_label = "theta",
   face_label = c("X", "Z"),
   palette = "Set1",
+  pole = TRUE,
   pole_label = "Pole",
   n_circle = 181,
   color_circle = "black",
@@ -399,12 +402,15 @@ ggplot_mohrcircle <- function(
       data = dc,
       ggplot2::aes(x = .data$x, y = .data$y),
       color = color_circle
-    ) +
-    ggplot2::geom_path(
+    )
+  if ((pole == TRUE) | !dplyr::near(theta, 0)) {
+    plt <- plt + ggplot2::geom_path(
       data = dl0,
       ggplot2::aes(x = .data$x, y = .data$y, color = .data$side),
       linetype = 2
-    ) +
+    )
+  }
+  plt <- plt +
     ggplot2::geom_point(
       data = dp0,
       ggplot2::aes(x = .data$x, y = .data$y, color = .data$side)
@@ -448,16 +454,7 @@ ggplot_mohrcircle <- function(
       )
   }
   plt <- plt +
-    ggplot2::annotate("point", x = sigx, y = tau) +
     ggplot2::annotate("point", x = p, y = 0) +
-    ggplot2::annotate(
-      "text",
-      x = sigx,
-      y = tau,
-      label = pole_label,
-      hjust = as.double(p >= sigx),
-      vjust = as.double(0 >= tau)
-    ) +
     ggplot2::coord_fixed(
       xlim = round_limits(p + q, lower = xlim[1], upper = xlim[2]),
       ylim = round_limits(c(-1.2*q, 1.2*q), lower = ylim[1], upper = ylim[2]),
@@ -467,6 +464,19 @@ ggplot_mohrcircle <- function(
     ggplot2::scale_color_brewer(palette = palette) +
     ggplot2::theme(legend.position = "none") +
     ggplot2::ylab(expression(tau~"[kPa]"))
+  #add pole point and text
+  if (pole == TRUE) {
+    plt <- plt +
+      ggplot2::annotate("point", x = sigx, y = tau) +
+      ggplot2::annotate(
+        "text",
+        x = sigx,
+        y = tau,
+        label = pole_label,
+        hjust = as.double(p >= sigx),
+        vjust = as.double(0 >= tau)
+      )
+  }
   #x-label: effective stress or not
   if (effective_stress == TRUE) {
     plt <- plt + ggplot2::xlab(expression(sigma*"'"~"[kPa]"))
