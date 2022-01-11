@@ -70,6 +70,12 @@ rotate_stresses <- function(sigx, sigz, tau, theta) {
 #' @param stress_nround number of decimals in stress labels
 #' @param effective_stress if `TRUE`, stresses are assumed effective and
 #'   'primes' are added to the stress labels to indicate so
+#' @param clockwise_shear if `TRUE`, shear stresses are positive on
+#'   positive faces of the element and when pointing in the positive
+#'   direction. When `FALSE`, the default structural mechanics notation
+#'   (right-hand rule for moments) is used instead, resulting in positive
+#'   shear stresses pointing in the opposite direction. Function calculations
+#'   assume (`clockwise_shear = TRUE`)
 #' @importFrom magrittr `%>%`
 #' @importFrom rlang .data
 #' @return ggplot object
@@ -80,7 +86,7 @@ rotate_stresses <- function(sigx, sigz, tau, theta) {
 ggplot_stresselement <- function(
   sigz = 40,
   sigx = 20,
-  tau = 5,
+  tau = 10,
   theta = 0/180*pi,
   rotation_label = "theta",
   face_label = c("X", "Z"),
@@ -95,8 +101,16 @@ ggplot_stresselement <- function(
   stress_unit = "kPa",
   stress_label_size = 3,
   stress_nround = 1,
-  effective_stress = FALSE
+  effective_stress = FALSE,
+  clockwise_shear = FALSE
 ){
+  #shear direction
+  if (clockwise_shear == TRUE) {
+    dir <- 1
+  } else {
+    dir <- -1
+    tau <- -tau
+  }
   #stress invariants
   p <- 0.5*(sigx + sigz)
   q <- sqrt((0.5*sigx - 0.5*sigz)^2 + tau^2)
@@ -265,13 +279,13 @@ ggplot_stresselement <- function(
       dlab <- tibble::tibble(label = c(
         paste0("sigma*minute[z]==", round(df$sigz2, stress_nround), "~", stress_unit),
         paste0("sigma*minute[x]==", round(df$sigx2, stress_nround), "~", stress_unit),
-        paste0("tau*minute[z]==", round(df$tau2, stress_nround), "~", stress_unit)
+        paste0("tau*minute[z]==", round(dir*df$tau2, stress_nround), "~", stress_unit)
       ))
     } else {
       dlab <- tibble::tibble(label = c(
         paste0("sigma[z]==", round(df$sigz2, stress_nround), "~", stress_unit),
         paste0("sigma[x]==", round(df$sigx2, stress_nround), "~", stress_unit),
-        paste0("tau[xz]==", round(df$tau2, stress_nround), "~", stress_unit)
+        paste0("tau[xz]==", round(dir*df$tau2, stress_nround), "~", stress_unit)
       ))
     }
     #positions
@@ -305,6 +319,8 @@ ggplot_stresselement <- function(
 #' @param n_circle number of points to use for drawing Mohr circle
 #' @param color_circle color of the Mohr circle
 #' @param color_lines color of lines crossing midpoint of circle
+#' @param double_angle if `TRUE`, an indicator for twice the applied rotation in
+#'   is plotted in the Mohr circle. If `FALSE`, this is omitted
 #' @param effective_stress if `TRUE`, effective stress label is plotted on the
 #'   x-axis. if `FALSE`, total stress
 #' @param xlim,ylim user defined min and max x and y axis limits. If not defined,
@@ -318,7 +334,7 @@ ggplot_stresselement <- function(
 ggplot_mohrcircle <- function(
   sigz = 40,
   sigx = 20,
-  tau = 5,
+  tau = 10,
   theta = 0,
   rotation_label = "theta",
   face_label = c("X", "Z"),
@@ -328,10 +344,19 @@ ggplot_mohrcircle <- function(
   n_circle = 181,
   color_circle = "black",
   color_lines = "grey50",
+  double_angle = FALSE,
   effective_stress = FALSE,
+  clockwise_shear = FALSE,
   xlim = c(0, NA),
   ylim = c(NA, NA)
 ){
+  #shear direction
+  if (clockwise_shear == TRUE) {
+    dir <- 1
+  } else {
+    dir <- -1
+    tau <- -tau
+  }
   #stress invariants
   p <- 0.5*(sigx + sigz)
   q <- sqrt((0.5*sigx - 0.5*sigz)^2 + tau^2)
@@ -420,7 +445,7 @@ ggplot_mohrcircle <- function(
       ggplot2::aes(x = .data$x, y = .data$y, color = .data$side, label = .data$label, hjust = as.double(p >= .data$x), vjust = as.double(0 >= .data$y)),
       parse = FALSE
     )
-  if (!dplyr::near(theta, 0)){
+  if (!dplyr::near(theta, 0)) {
     plt <- plt +
       ggplot2::geom_path(
         data = dl,
@@ -439,19 +464,30 @@ ggplot_mohrcircle <- function(
         data = drot1,
         ggplot2::aes(x = .data$x, y = .data$y, color = .data$side),
         arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "lines"))
-      ) +
-      ggplot2::geom_path(
-        data = drot2,
-        ggplot2::aes(x = .data$x, y = .data$y, color = .data$side),
-        arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "lines"))
-      ) +
-      ggplot2::geom_text(
-        data = drotlabel,
+      )
+    if (double_angle == TRUE) {
+      plt <- plt +
+        ggplot2::geom_path(
+          data = drot2,
+          ggplot2::aes(x = .data$x, y = .data$y, color = .data$side),
+          arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "lines"))
+        ) +
+        ggplot2::geom_text(
+          data = drotlabel,
+          ggplot2::aes(x = .data$x, y = .data$y, label = .data$label, color = .data$side),
+          hjust = 0.5,
+          vjust = 0.5,
+          parse = TRUE
+        )
+    } else {
+      plt <- plt + ggplot2::geom_text(
+        data = drotlabel[1,],
         ggplot2::aes(x = .data$x, y = .data$y, label = .data$label, color = .data$side),
         hjust = 0.5,
         vjust = 0.5,
         parse = TRUE
       )
+    }
   }
   plt <- plt +
     ggplot2::annotate("point", x = p, y = 0) +
