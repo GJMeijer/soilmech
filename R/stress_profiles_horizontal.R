@@ -195,7 +195,7 @@ plotly_stressprofile_horizontal_sigmav <- function(
       ),
       text = paste0(
         line_name[1],
-        "<br>\u03c3'<sub>v,max</sub> = ",
+        "<br>\u03c3'<sub>v,c</sub> = ",
         round(sigma_v0, nround),
         " kPa"
       ),
@@ -840,7 +840,6 @@ plotly_soilstressprofile_horizontal <- function(
 #' @examples
 #' #removal of surcharge
 #' plotly_overconsolidation_profile(q = 0, q0 = 100)
-#'
 #' @export
 
 plotly_overconsolidation_profile <- function(

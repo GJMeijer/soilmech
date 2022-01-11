@@ -55,7 +55,7 @@ ggplot_casagrande_preconsolidation <- function(
   xlim = c(4, NA),
   ylim = c(NA, NA),
   palette = "Set1",
-  label_line = c("1", "2", "3", "4", "5", 'sigma*minute[v*","*0]'),
+  label_line = c("1", "2", "3", "4", "5", 'sigma*minute[v*","*c]'),
   stages = seq(6),
   include_value = TRUE,
   nsignif = 2
