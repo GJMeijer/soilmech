@@ -1,0 +1,15 @@
+relation_id,equation,equation_html
+1,m = m_s + m_w,m = m<sub>s</sub> + m<sub>w</sub>
+2,w = m_w / m_s,w = m<sub>w</sub> / m<sub>s</sub>
+3,rho_b = m / V,ρ<sub>b</sub> = m / V
+4,rho_d = m_s / V,ρ<sub>d</sub> = m<sub>s</sub> / V
+5,rho_s = m_s / V_s,ρ<sub>s</sub> = m<sub>s</sub> / V<sub>s</sub>
+6,rho_w = m_w / V_w,ρ<sub>w</sub> = m<sub>w</sub> / V<sub>w</sub>
+7,G_s = rho_s / rho_w,G<sub>s</sub> = ρ<sub>d</sub> / ρ<sub>w</sub>
+8,I_D = (e_max - e)/(e_max - e_min),I<sub>D</sub> = (e<sub>max</sub> - e) / (e<sub>max</sub> - e<sub>min</sub>)
+9,e = V_s / V_v,e = V<sub>s</sub> / V<sub>v</sub>
+10,S_r = V_w / V_v,S<sub>r</sub> = V<sub>w</sub> / V<sub>v</sub>
+11,n = V_v / V,n = V<sub>v</sub> / V
+12,theta = V_w / V,θ = V<sub>w</sub> / V
+13,V = V_s + V_v,V = V<sub>s</sub> + V<sub>v</sub>
+14,V_v = V_a + V_w,V<sub>v</sub> = V<sub>a</sub> + V<sub>w</sub>

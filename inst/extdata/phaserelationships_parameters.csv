@@ -1,0 +1,22 @@
+parameter_id,parameter,parameter_html,name,x,y
+1,m,m,total mass,10,100
+2,m_s,m<sub>s</sub>,mass of solids,40,90
+3,m_w,m<sub>w</sub>,mass of water,90,100
+4,w,w,water content,65,82.5
+5,G_s,G<sub>s</sub>,specific gravity,65,70
+6,rho_b,ρ<sub>b</sub>,bulk density,0,60
+7,rho_d,ρ<sub>d</sub>,dry bulk density,22.5,60
+8,rho_s,ρ<sub>s</sub>,density of solids,50,60
+9,rho_w,ρ<sub>w</sub>,density of water,80,60
+10,I_D,I<sub>D</sub>,relative density,60,50
+11,e,e,void ratio,50,40
+12,e_min,e<sub>min</sub>,maximum void ratio,70,40
+13,e_max,e<sub>max</sub>,minimum void ratio,75,50
+14,V,V,total volume,20,0
+15,V_s,V<sub>s</sub>,volume of solids,40,30
+16,V_v,V<sub>v</sub>,volume of voids,60,30
+17,V_a,V<sub>a</sub>,volume of air,75,15
+18,V_w,V<sub>w</sub>,volume of water,100,15
+19,S_r,S<sub>r</sub>,saturation ratio,85,30
+20,n,n,porosity,60,15
+21,theta,θ,volumetric water content,90,0
