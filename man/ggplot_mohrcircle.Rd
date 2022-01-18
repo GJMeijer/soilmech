@@ -7,16 +7,19 @@
 ggplot_mohrcircle(
   sigz = 40,
   sigx = 20,
-  tau = 5,
+  tau = 10,
   theta = 0,
   rotation_label = "theta",
   face_label = c("X", "Z"),
   palette = "Set1",
+  pole = TRUE,
   pole_label = "Pole",
   n_circle = 181,
   color_circle = "black",
   color_lines = "grey50",
+  double_angle = FALSE,
   effective_stress = FALSE,
+  clockwise_shear = FALSE,
   xlim = c(0, NA),
   ylim = c(NA, NA)
 )
@@ -36,6 +39,9 @@ ggplot_mohrcircle(
 
 \item{palette}{RColorBrewer color palette to use}
 
+\item{pole}{plot the pole point, label and lines if `pole = TRUE`. If
+`pole = FALSE`, do not plot anything related to the pole}
+
 \item{pole_label}{label to plot at pole}
 
 \item{n_circle}{number of points to use for drawing Mohr circle}
@@ -44,8 +50,18 @@ ggplot_mohrcircle(
 
 \item{color_lines}{color of lines crossing midpoint of circle}
 
+\item{double_angle}{if `TRUE`, an indicator for twice the applied rotation in
+is plotted in the Mohr circle. If `FALSE`, this is omitted}
+
 \item{effective_stress}{if `TRUE`, effective stress label is plotted on the
 x-axis. if `FALSE`, total stress}
+
+\item{clockwise_shear}{if `TRUE`, shear stresses are positive on
+positive faces of the element and when pointing in the positive
+direction. When `FALSE`, the default structural mechanics notation
+(right-hand rule for moments) is used instead, resulting in positive
+shear stresses pointing in the opposite direction. Function calculations
+assume (`clockwise_shear = TRUE`)}
 
 \item{xlim, ylim}{user defined min and max x and y axis limits. If not defined,
 the are automatically chosen}

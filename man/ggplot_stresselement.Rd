@@ -7,7 +7,7 @@
 ggplot_stresselement(
   sigz = 40,
   sigx = 20,
-  tau = 5,
+  tau = 10,
   theta = 0/180 * pi,
   rotation_label = "theta",
   face_label = c("X", "Z"),
@@ -22,7 +22,8 @@ ggplot_stresselement(
   stress_unit = "kPa",
   stress_label_size = 3,
   stress_nround = 1,
-  effective_stress = FALSE
+  effective_stress = FALSE,
+  clockwise_shear = FALSE
 )
 }
 \arguments{
@@ -65,6 +66,13 @@ right-hand corner}
 
 \item{effective_stress}{if `TRUE`, stresses are assumed effective and
 'primes' are added to the stress labels to indicate so}
+
+\item{clockwise_shear}{if `TRUE`, shear stresses are positive on
+positive faces of the element and when pointing in the positive
+direction. When `FALSE`, the default structural mechanics notation
+(right-hand rule for moments) is used instead, resulting in positive
+shear stresses pointing in the opposite direction. Function calculations
+assume (`clockwise_shear = TRUE`)}
 }
 \value{
 ggplot object

@@ -76,5 +76,4 @@ depth
 \examples{
 #removal of surcharge
 plotly_overconsolidation_profile(q = 0, q0 = 100)
-
 }

@@ -67,5 +67,6 @@ All boundary conditions are assumed impermeable, unless otherwise defined
 using the inputs `bc_domain`, `bc_edge`, `bc_type` and `bc_value`.
 }
 \examples{
+#standard example
 flownet_geometry_rectangular()
 }

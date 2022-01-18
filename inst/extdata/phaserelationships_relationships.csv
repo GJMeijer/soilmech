@@ -5,9 +5,9 @@ relation_id,equation,equation_html
 4,rho_d = m_s / V,ρ<sub>d</sub> = m<sub>s</sub> / V
 5,rho_s = m_s / V_s,ρ<sub>s</sub> = m<sub>s</sub> / V<sub>s</sub>
 6,rho_w = m_w / V_w,ρ<sub>w</sub> = m<sub>w</sub> / V<sub>w</sub>
-7,G_s = rho_s / rho_w,G<sub>s</sub> = ρ<sub>d</sub> / ρ<sub>w</sub>
+7,G_s = rho_s / rho_w,G<sub>s</sub> = ρ<sub>s</sub> / ρ<sub>w</sub>
 8,I_D = (e_max - e)/(e_max - e_min),I<sub>D</sub> = (e<sub>max</sub> - e) / (e<sub>max</sub> - e<sub>min</sub>)
-9,e = V_s / V_v,e = V<sub>s</sub> / V<sub>v</sub>
+9,e = V_v / V_s,e = V<sub>v</sub> / V<sub>s</sub>
 10,S_r = V_w / V_v,S<sub>r</sub> = V<sub>w</sub> / V<sub>v</sub>
 11,n = V_v / V,n = V<sub>v</sub> / V
 12,theta = V_w / V,θ = V<sub>w</sub> / V

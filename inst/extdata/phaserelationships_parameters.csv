@@ -5,7 +5,7 @@ parameter_id,parameter,parameter_html,name,x,y
 4,w,w,water content,65,82.5
 5,G_s,G<sub>s</sub>,specific gravity,65,70
 6,rho_b,ρ<sub>b</sub>,bulk density,0,60
-7,rho_d,ρ<sub>d</sub>,dry bulk density,22.5,60
+7,rho_d,ρ<sub>d</sub>,dry density,22.5,60
 8,rho_s,ρ<sub>s</sub>,density of solids,50,60
 9,rho_w,ρ<sub>w</sub>,density of water,80,60
 10,I_D,I<sub>D</sub>,relative density,60,50

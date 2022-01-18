@@ -443,7 +443,7 @@ ggplot_add_hydraulichead <- function(
         data = di,
         binwidth = binwidth,
         ggplot2::aes(x = .data$x, y = .data$y, z = .data$val),
-        label.placement = metR::label_placement_n(label_n),
+        label.placer = metR::label_placer_n(label_n),
         size = label_size
       )
   }
