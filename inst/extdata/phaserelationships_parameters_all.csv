@@ -1,0 +1,44 @@
+parameter_id,parameter,parameter_html,name,x,y,,relation_id,parameter_id,,relation_id,equation,,equation_html
+1,m,m,total mass,5,100,,1,1,,1,m = m_s + m_w,,m = m<sub>s</sub> + m<sub>w</sub>
+2,m_s,m<sub>s</sub>,mass of solids,40,90,,1,2,,2,w = m_w / m_s,,w = m<sub>w</sub> / m<sub>s</sub>
+3,m_w,m<sub>w</sub>,mass of water,80,90,,1,3,,3,rho_b = m / V,,\u03c1<sub>b</sub> = m / V
+4,w,w,water content,60,80,,2,3,,4,rho_d = m_s / V,,\u03c1<sub>d</sub> = m<sub>s</sub> / V
+5,G_s,G<sub>s</sub>,specific gravity,60,70,,2,4,,5,rho_s = m_s / V_s,,\u03c1<sub>s</sub> = m<sub>s</sub> / V<sub>s</sub>
+6,rho_b,\u03c1<sub>b</sub>,bulk density,0,60,,2,5,,6,rho_w = m_w / V_w,,\u03c1<sub>w</sub> = m<sub>w</sub> / V<sub>w</sub>
+7,rho_d,\u03c1<sub>d</sub>,dry bulk density,30,60,,3,6,,7,G_s = rho_s / rho_w,,G<sub>s</sub> = \u03c1<sub>d</sub> / \u03c1<sub>w</sub>
+8,rho_s,\u03c1<sub>s</sub>,density of solids,50,60,,3,1,,8,I_D = (e_max - e)/(e_max - e_min),,I<sub>D</sub> = (e<sub>max</sub> - e) / (e<sub>max</sub> - e<sub>min</sub>)
+9,rho_w,\u03c1<sub>w</sub>,density of water,70,60,,3,14,,9,e = V_s / V_v,,e = V<sub>s</sub> / V<sub>v</sub>
+10,I_D,I<sub>D</sub>,relative density,70,50,,4,7,,10,S_r = V_w / V_v,,S<sub>r</sub> = V<sub>w</sub> / V<sub>v</sub>
+11,e,e,void ratio,70,40,,4,2,,11,n = V_v / V,,n = V<sub>v</sub> / V
+12,e_min,e<sub>min</sub>,maximum void ratio,70,45,,4,14,,12,theta = V_w / V,,\u03b8 = V<sub>w</sub> / V
+13,e_max,e<sub>max</sub>,minimum void ratio,70,55,,5,8,,13,V = V_s + V_v,,V = V<sub>s</sub> + V<sub>v</sub>
+14,V,V,total volume,70,0,,5,2,,14,V_v = V_a + V_w,,V<sub>v</sub> = V<sub>a</sub> + V<sub>w</sub>
+15,V_s,V<sub>s</sub>,volume of solids,70,30,,5,15,,,,,
+16,V_v,V<sub>v</sub>,volume of voids,70,30,,6,9,,,,,
+17,V_a,V<sub>a</sub>,volume of air,70,20,,6,3,,,,,
+18,V_w,V<sub>w</sub>,volume of water,70,20,,6,18,,,,,
+19,S_r,S<sub>r</sub>,saturation ratio,70,40,,7,5,,,,,
+20,n,n,porosity,70,20,,7,8,,,,,
+21,theta,\u03b8,volumetric water content,70,0,,7,9,,,,,
+,,,,,,,8,10,,,,,
+,,,,,,,8,13,,,,,
+,,,,,,,8,12,,,,,
+,,,,,,,8,11,,,,,
+,,,,,,,9,11,,,,,
+,,,,,,,9,15,,,,,
+,,,,,,,9,16,,,,,
+,,,,,,,10,19,,,,,
+,,,,,,,10,18,,,,,
+,,,,,,,10,16,,,,,
+,,,,,,,11,20,,,,,
+,,,,,,,11,16,,,,,
+,,,,,,,11,14,,,,,
+,,,,,,,12,21,,,,,
+,,,,,,,12,18,,,,,
+,,,,,,,12,14,,,,,
+,,,,,,,13,14,,,,,
+,,,,,,,13,15,,,,,
+,,,,,,,13,16,,,,,
+,,,,,,,14,16,,,,,
+,,,,,,,14,17,,,,,
+,,,,,,,14,18,,,,,

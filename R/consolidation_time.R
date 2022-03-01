@@ -30,7 +30,7 @@ calculate_consolidation_openlayer <- function(
     zd = zd,
     Tv = Tv
   ) %>%
-    tidyr::expand_grid(m = seq(nfourier)) %>%
+    tidyr::expand_grid(m = seq(0, nfourier)) %>%
     dplyr::mutate(
       M = pi/2*(2*.data$m + 1),
       ue = 2/.data$M*sin(.data$M*.data$zd)*exp(-.data$M^2*.data$Tv)) %>%
