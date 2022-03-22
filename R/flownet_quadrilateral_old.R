@@ -42,22 +42,22 @@
 #' @export
 
 flownet_geometry_quadrilateral <- function(
-  x = matrix(c(1,3,6,7, 1,3,5,6, 1,3,5,6), ncol = 3, byrow = FALSE),
-  y = matrix(c(0,0,0,0, 1,1,1.5,1.5, 2.5,2,2,2), ncol = 3, byrow = FALSE),
-  ix = c(1, 1, 2, 3),
-  iy = c(2, 1, 1, 1),
+  x = matrix(c(1,3,6, 1,3,5, 1,3,5), ncol = 3, byrow = FALSE),
+  y = matrix(c(0,0,0, 1,1,1.5, 2.5,2,2), ncol = 3, byrow = FALSE),
+  ix = c(1, 1, 2),
+  iy = c(2, 1, 1),
   kx = 1e-6,
   ky = 1e-6,
   grid_size = 0.05,
-  bc_domain = c(1, 4),
+  bc_domain = c(1, 3),
   bc_edge = c(2, 3),
   bc_type = c("h", "h"),
   bc_value = c(10, 5),
   node_min = 3
 ){
   #estimate max grid size for each row/column
-  Lx <- apply(sqrt(diff(x)^2 + diff(y)^2), 1, max)
-  Ly <- apply(sqrt(diff(t(x))^2 + diff(t(y))^2), 1, max)
+  Lx <- apply(sqrt(diff(x)^2 + diff(t(x))^2), 1, max)
+  Ly <- apply(sqrt(diff(t(y))^2 + diff(y)^2), 1, max)
   #create dataframe
   dom <- tibble::tibble(ix = ix, iy = iy, kx = kx, ky = ky) %>%
     dplyr::mutate(
