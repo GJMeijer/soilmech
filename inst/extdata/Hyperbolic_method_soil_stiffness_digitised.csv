@@ -1,0 +1,12 @@
+﻿soiltype,consistency,Eb_min [MPa],Eb_max [MPa]
+Fine-grained soils,Very soft,0,3
+Fine-grained soils,Soft,3,6
+Fine-grained soils,Firm,6,15
+Fine-grained soils,Stiff,15,25
+Fine-grained soils,Very stiff,25,40
+Fine-grained soils,Hard,40,90
+Course-grained soils,Very loose,0.5,15
+Course-grained soils,Loose,15,30
+Course-grained soils,Medium dense,30,100
+Course-grained soils,Dense,100,200
+Course-grained soils,Very dense,198,200

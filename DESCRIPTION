@@ -12,7 +12,7 @@ Authors@R:
              role = c("cph")))
 Description: This package contains manu functions for soil mechanics 
     calculations and plots. 
-License: GPL (>=3)
+License: file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: 

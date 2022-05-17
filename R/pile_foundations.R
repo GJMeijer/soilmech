@@ -326,3 +326,197 @@ ggplot_pileshaft_poulos <- function(
   #return
   return(plt)
 }
+
+
+#' ggplot Poulos's chart for friction along pile in sand
+#'
+#' @description
+#' Create a ggplot chart for the stiffness under the pile tip as used in the
+#' Hyperbolic method by Fleming (1992). Data digitised from Craig's Soil
+#' Mechanics
+#'
+#' This function uses data from a digitised plot, so may not be 100% accurate
+#'
+#' @return ggplot object
+#' @examples
+#' #plot chart
+#' ggplot_hyperbolicmethod_stiffness()
+#' @export
+
+ggplot_hyperbolicmethod_stiffness <- function(){
+  #file path
+  file_path <- system.file(
+    "extdata",
+    "Hyperbolic_method_soil_stiffness_digitised.csv",
+    package = "soilmech"
+  )
+  #load data from file
+  df_raw <- readr::read_csv(
+    file_path,
+    col_types = readr::cols()
+  )
+  #change factor levels - to get correct order in plot
+  soiltype_unique <- unique(df_raw$soiltype)
+  df_raw$soiltype <- as.factor(df_raw$soiltype)
+  df_raw$soiltype <- factor(df_raw$soiltype, levels = soiltype_unique)
+  consistency_unique <- unique(df_raw$consistency)
+  df_raw$consistency <- as.factor(df_raw$consistency)
+  df_raw$consistency <- factor(df_raw$consistency, levels = consistency_unique)
+  #create ggplot   - plt
+  plt <- ggplot2::ggplot() +
+    theme_soilmech() +
+    ggplot2::geom_errorbar(
+      data = df_raw,
+      ggplot2::aes(x = .data$consistency, ymin = .data$`Eb_min [MPa]`, ymax = .data$`Eb_max [MPa]`),
+      width = 0.5
+    ) +
+    ggplot2::facet_wrap(~.data$soiltype, scales = "free_x") +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab(expression(E[b]~"[MPa]")) +
+    ggplot2::scale_y_continuous(lim = c(0, 200), expand = c(0, 0)) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1))
+  #return
+  return(plt)
+}
+
+
+#' Calculate pile displacements using the hyperbolic method
+#'
+#' @description
+#' Calculates the settlement of a rigid pile using Fleming's (1992)
+#' hyperbolic method for pile displacements.
+#'
+#' @param Q vector of loads applied to pile
+#' @param Qs pile shaft capacity
+#' @param Qb pile base capacity
+#' @param Eb soil Young's modulus underneath the pile tip
+#' @param Ds pile shaft diameter
+#' @param Db pile base diameter. If not defined, this is assumed to be equal
+#'   to the shaft diameter
+#' @param Ms empirical factor, assumed as Ms = 0.001 by default
+#' @examples
+#' # Input parameters
+#' Qs <- 1000  # [kN]
+#' Qb <- 1500  # [kN]
+#' Q <- seq(0, Qs + Qb, l = 101)  # [kN]
+#' Eb <- 20*1e3  # [kPa]
+#' Ds <- 0.5  # [m]
+#'
+#' # Calculate settlement
+#' s <- hyperbolicmethod_settlement(Q, Qb, Qs, Eb, Ds)  # [m]
+#'
+#' # plot
+#' plot(Q, s)
+#' @export
+
+hyperbolicmethod_settlement <- function(Q, Qb, Qs, Eb, Ds, Db = NULL, Ms = 0.001) {
+  # pile not underreamed
+  if (is.null(Db)) {
+    Db <- Ds
+  }
+  # calculate parameters
+  alp <- Qs
+  bet <- Db*Qb*Eb
+  del <- 0.6*Qb
+  lam <- Ms*Ds
+  eta <- Db*Eb
+  a <- eta*(Q - alp) - bet
+  b <- Q*(del + lam*eta) - alp*del - bet*lam
+  c <- lam*del*Q
+  # solve quadratic equation
+  D <- sqrt(b^2 - 4*a*c)
+  s <- ifelse(D/a > 0, (-b + D)/(2*a), (-b - D)/(2*a))
+  # return settlement
+  return(s)
+}
+
+
+#' ggplot exampe pile settlement using the hyperbolic method
+#'
+#' @description
+#' Returns an example pile load-settlement graph for a rigid pile using
+#' Fleming's (1992) hyperbolic method for pile displacements.
+#'
+#' @param Q Example load applied to pile
+#' @param Qs pile shaft capacity
+#' @param Qb pile base capacity
+#' @param Eb soil Young's modulus underneath the pile tip
+#' @param Ds pile shaft diameter
+#' @param Db pile base diameter. If not defined, this is assumed to be equal
+#'   to the shaft diameter
+#' @param Ms empirical factor, assumed as Ms = 0.001 by default
+#' @param ylim vector with upper and lower plot settlement limits
+#' @param palette RColorBrewer color palette to use for annotations
+#' @examples
+#' # Input parameters
+#' Qs <- 1000  # [kN]
+#' Qb <- 1500  # [kN]
+#' Q <- 2000  # [kN]
+#' Eb <- 50e3  # [kPa]
+#' Ds <- 0.5  # [m]
+#'
+#' # plot
+#' ggplot_hyperbolicmethod(Qb = Qb, Qs = Qs, Q = Q, Eb = Eb, Ds = Ds)
+#' @export
+
+ggplot_hyperbolicmethod <- function(
+  Qb = 1500,
+  Qs = 1000,
+  Q = 2000,
+  Eb = 50e3,
+  Ds = 0.50,
+  Db = NULL,
+  Ms = 0.001,
+  ylim = c(0, 0.5),
+  palette = "Set1"
+) {
+  # no loads applied - create vector
+  Qp <- seq(0, Qb + Qs, l = 251)[1:250]
+  # calculate settlements
+  sp <- hyperbolicmethod_settlement(Qp, Qb, Qs, Eb, Ds, Db = Db, Ms = Ms)
+  # colors
+  colo <- RColorBrewer::brewer.pal(3, palette)
+  # plot
+  plt <- ggplot2::ggplot() +
+    soilmech::theme_soilmech() +
+    ggplot2::geom_path(ggplot2::aes(x = Qp, y = sp)) +
+    ggplot2::xlab("Pile load Q [kN]") +
+    ggplot2::ylab("Displacement s [m]") +
+    ggplot2::scale_x_continuous(lim = c(0, Qb + Qs), expand = ggplot2::expansion(mult = c(0, 0.025))) +
+    ggplot2::coord_cartesian(ylim = rev(ylim)) +
+    ggplot2::scale_y_reverse(expand = c(0, 0))
+  # add max load
+  plt <- plt +
+    ggplot2::geom_vline(xintercept = Qb + Qs, color = colo[2], linetype = 2) +
+    ggplot2::annotate(
+      "text",
+      x = 0.99*(Qb + Qs), y = 0.5*(ylim[1] + ylim[2]),
+      label = "Q[u]", parse = TRUE,
+      hjust = 1, vjust = 0.5, color = colo[2]
+    )
+  # add example load
+  if (!is.null(Q)) {
+    # settlement at example load
+    s <- hyperbolicmethod_settlement(Q, Qb, Qs, Eb, Ds, Db = Db, Ms = Ms)
+    # add annotation for applied load
+    plt <- ggplot_addcrosshairs(
+        plt,
+        x = Q, y = s, ylim = ylim[2],
+        arrow_x = FALSE, add_colour_scale = TRUE, palette = palette
+      ) +
+      ggplot2::annotate(
+        "text",
+        x = Q - 0.01*(Qb + Qs), y = 0.5*(s + ylim[2]),
+        label = "Q", parse = TRUE,
+        hjust = 1, vjust = 0.5, color = colo[1]
+      ) +
+      ggplot2::annotate(
+        "text",
+        x = 0.5*Q, y = s + 0.01*(ylim[2] - ylim[1]),
+        label = "s", parse = TRUE,
+        hjust = 0.5, vjust = 1, color = colo[1]
+      )
+  }
+  # return plot
+  return(plt)
+}
